@@ -1,0 +1,28 @@
+{
+  "name": "central-solicitacoes-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "nuxt": "^3.14.0",
+    "vue": "^3.5.0",
+    "vue-router": "^4.4.0",
+    "pinia": "^2.2.4",
+    "@pinia/nuxt": "^0.5.5",
+    "chart.js": "^4.4.4",
+    "vue-chartjs": "^5.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@vue/tsconfig": "^0.5.1",
+    "vue-tsc": "^2.1.6",
+    "@types/node": "^20.14.0"
+  }
+}
