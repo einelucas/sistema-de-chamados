@@ -38,11 +38,21 @@ Usuário → Frontend (Nuxt, porta 3000) → API REST (FastAPI, porta 8000) → 
 
 ## Tecnologias
 
-**Frontend**: Nuxt 3, Vue 3, TypeScript, Composition API (`<script setup>`), Pinia (apenas para o
-estado global de autenticação), Chart.js/vue-chartjs para os gráficos do dashboard.
+<div align="center">
 
-**Backend**: FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic, PostgreSQL, Pytest, python-jose (JWT),
-Passlib + bcrypt (hash de senha).
+<img src="https://skillicons.dev/icons?i=vue,nuxtjs,ts,py,fastapi,postgres,docker&theme=dark" alt="Vue, Nuxt, TypeScript, Python, FastAPI, PostgreSQL e Docker" />
+
+</div>
+
+| Camada | Tecnologias |
+| --- | --- |
+| Frontend | Nuxt 3, Vue 3, TypeScript e Composition API (`<script setup>`) |
+| Estado e gráficos | Pinia, Chart.js e vue-chartjs |
+| Backend | Python, FastAPI, Pydantic v2, SQLAlchemy 2.0 e Alembic |
+| Banco de dados | PostgreSQL 16 |
+| Autenticação | JWT com python-jose, Passlib e bcrypt |
+| Testes | Pytest, SQLite em memória e testes de integração com PostgreSQL |
+| Infraestrutura | Docker e Docker Compose |
 
 ## Estrutura de pastas
 
