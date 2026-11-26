@@ -3,4 +3,4 @@ import {LayoutDashboard,ClipboardList,Users,UserRound,Menu,X,ChevronDown,LogOut,
 const props=withDefaults(defineProps<{name:string;size?:number|string;strokeWidth?:number}>(),{size:20,strokeWidth:1.8})
 const icons={dashboard:LayoutDashboard,requests:ClipboardList,users:Users,user:UserRound,menu:Menu,close:X,chevronDown:ChevronDown,logout:LogOut,plus:Plus,total:ListTodo,open:CircleAlert,progress:LoaderCircle,check:Check,clock:Clock,paperclip:Paperclip,search:Search,bell:Bell,arrowRight:ArrowRight,edit:Pencil,trash:Trash2,activity:Activity,shield:ShieldCheck,sun:Sun,moon:Moon,folder:Folder,eye:Eye,eyeOff:EyeOff}
 const current=computed(()=>icons[props.name as keyof typeof icons]??Folder)
-</script><template><component :is="current" :size="props.size" :stroke-width="props.strokeWidth" aria-hidden="true"/></template>
+</script><template><component :is="current" :size="Number(props.size)||20" :stroke-width="props.strokeWidth" aria-hidden="true"/></template>
