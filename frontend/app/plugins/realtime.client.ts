@@ -23,4 +23,6 @@ export default defineNuxtPlugin(nuxt=>{
   window.addEventListener('offline',()=>{stop();status.value='offline'})
   document.addEventListener('visibilitychange',focus)
   window.addEventListener('central:changed',refresh)
+  // Authorized version checks also drain the persisted webhook outbox on serverless.
+  useSilentRefresh(async()=>{if(auth.user){try{const v=await nuxt.$api<{revision:string}>('/sync/version',{force:true});if(v.revision!==revision){revision=v.revision;refresh()}}catch{}}},15000)
 })

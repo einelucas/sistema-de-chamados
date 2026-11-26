@@ -33,6 +33,8 @@ class Settings(BaseSettings):
 
     API_V1_PREFIX: str = "/api/v1"
     NEXOTIVA_INTEGRATION_TOKEN: str = ""
+    NEXOTIVA_WEBHOOK_URL: str = ""
+    NEXOTIVA_WEBHOOK_SECRET: str = ""
 
     @property
     def cors_origins_list(self) -> list[str]:

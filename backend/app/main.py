@@ -1,7 +1,11 @@
 """Ponto de entrada da aplicacao FastAPI."""
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from starlette.concurrency import run_in_threadpool
+from app.services import webhook
+from uuid import uuid4
+from time import perf_counter
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import api_router
@@ -34,6 +38,19 @@ app = FastAPI(
     openapi_url="/openapi.json",
     lifespan=lifespan,
 )
+
+@app.middleware("http")
+async def request_metadata(request:Request,call_next):
+    start=perf_counter()
+    response=await call_next(request)
+    response.headers["X-Request-ID"]=str(uuid4())
+    if not response.headers.get("content-type","").startswith("text/event-stream"):
+        response.headers["Cache-Control"]="no-store"
+    if webhook.configured() and response.status_code<300 and (request.method in ("POST","PUT","PATCH","DELETE") or request.url.path.endswith("/sync/version")):
+        try:await run_in_threadpool(webhook.deliver_pending)
+        except Exception:logger.warning("Entrega de webhook adiada; outbox preservada")
+    logger.info("route=%s method=%s status=%d ms=%.1f",getattr(request.scope.get("route"),"path","unknown"),request.method,response.status_code,(perf_counter()-start)*1000)
+    return response
 
 app.add_middleware(
     CORSMiddleware,

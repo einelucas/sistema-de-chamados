@@ -11,6 +11,7 @@ from app.models.attachment import Attachment
 from app.models.nexotiva_ticket import NexotivaTicket
 from app.models.support_sync import SupportRevision,SupportOutbox
 from app.models.enums import UserRole
+from app.core.config import settings
 
 @event.listens_for(Session,"after_flush")
 def record_changes(db,_):
@@ -35,6 +36,7 @@ def record_changes(db,_):
     ins=pg_insert if conn.dialect.name=="postgresql" else sqlite_insert
     stmt=ins(SupportRevision).values([{"scope":scope,"revision":str(uuid4())} for scope in sorted(scopes)])
     conn.execute(stmt.on_conflict_do_update(index_elements=["scope"],set_={"revision":stmt.excluded.revision}))
+    if not settings.NEXOTIVA_WEBHOOK_URL:return
     links=conn.execute(select(NexotivaTicket.request_id,NexotivaTicket.company_id,NexotivaTicket.user_id).where(NexotivaTicket.request_id.in_(changed))).all()
     for tid,cid,uid in links:
         for kind in sorted(changed[tid]-{"internal"}):
