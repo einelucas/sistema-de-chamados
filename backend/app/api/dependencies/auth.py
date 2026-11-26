@@ -27,7 +27,7 @@ def get_current_user(
     user = UserRepository(db).get_by_id(int(payload["sub"]))
     if not user:
         raise UnauthorizedError("Usuario nao encontrado")
-    if not user.is_active:
+    if not user.is_active or user.integration_identity or user.email.lower().endswith('@integration.example.com'):
         raise UnauthorizedError("Usuario inativo")
     return user
 

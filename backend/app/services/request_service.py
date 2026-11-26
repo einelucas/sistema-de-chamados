@@ -3,7 +3,9 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import AppError, ForbiddenError, NotFoundError
+from app.core.exceptions import AppError, ForbiddenError, NotFoundError, ConflictError
+from app.models.user import User
+from app.models.nexotiva_ticket import NexotivaTicket
 from app.models.enums import HistoryAction, RequestStatus, UserRole
 from app.models.request import Request
 from app.models.user import User
@@ -120,6 +122,8 @@ class RequestService:
         request = self.get_request(request_id, user)
         if user.role != UserRole.ADMIN and request.requester_id != user.id:
             raise ForbiddenError("Voce nao tem permissao para excluir esta solicitacao")
+        if self.db.get(NexotivaTicket,request.id):
+            raise ConflictError('Chamados da Nexotiva devem ser cancelados, não excluídos')
         self.history.log(request.id, user.id, HistoryAction.EXCLUSAO, previous_value=request.status.value)
         self.repo.soft_delete(request)
 
@@ -166,6 +170,10 @@ class RequestService:
         request = self.get_request(request_id, user)
         if user.role == UserRole.USER:
             raise ForbiddenError("Apenas analistas e administradores podem atribuir responsavel")
+        if payload.assignee_id is not None:
+            assignee=self.db.get(User,payload.assignee_id)
+            if not assignee or not assignee.is_active or assignee.integration_identity:
+                raise ConflictError('Responsável indisponível')
         previous = request.assignee_id
         request.assignee_id = payload.assignee_id
         request = self.repo.update(request)

@@ -22,7 +22,7 @@ class AttachmentService:
         self.requests = RequestRepository(db)
         self.history = HistoryService(db)
         self.upload_dir = Path(settings.UPLOAD_DIRECTORY)
-        self.upload_dir.mkdir(parents=True, exist_ok=True)
+
 
     def list_for_request(self, request_id: int) -> list[Attachment]:
         if not self.requests.get_by_id(request_id):
@@ -38,15 +38,12 @@ class AttachmentService:
         if extension not in settings.allowed_upload_extensions_list:
             raise AppError(f"Tipo de arquivo nao permitido: {extension}")
 
-        contents = file.file.read()
+        contents = file.file.read(settings.MAX_UPLOAD_SIZE + 1)
         if len(contents) > settings.MAX_UPLOAD_SIZE:
             raise AppError("Arquivo excede o tamanho maximo permitido")
 
         # Gera um nome de arquivo seguro e unico para evitar sobrescrita ou path traversal
         safe_name = f"{uuid.uuid4().hex}{extension}"
-        destination = self.upload_dir / safe_name
-        with open(destination, "wb") as buffer:
-            buffer.write(contents)
 
         attachment = Attachment(
             request_id=request_id,
@@ -55,15 +52,18 @@ class AttachmentService:
             stored_filename=safe_name,
             content_type=file.content_type or "application/octet-stream",
             size_bytes=len(contents),
+            file_content=contents,
         )
         attachment = self.repo.create(attachment)
         self.history.log(request_id, user.id, HistoryAction.ANEXO_ADICIONADO, new_value=original_name)
         return attachment
 
-    def get_file_path(self, attachment_id: int) -> tuple[Attachment, Path]:
+    def get_file_path(self, attachment_id: int) -> tuple[Attachment, Path | None]:
         attachment = self.repo.get_by_id(attachment_id)
         if not attachment:
             raise NotFoundError("Anexo nao encontrado")
+        if attachment.file_content is not None:
+            return attachment, None
         # Garante que o arquivo resolvido permanece dentro do diretorio de uploads
         path = (self.upload_dir / attachment.stored_filename).resolve()
         if self.upload_dir.resolve() not in path.parents:
@@ -76,9 +76,12 @@ class AttachmentService:
         attachment = self.repo.get_by_id(attachment_id)
         if not attachment:
             raise NotFoundError("Anexo nao encontrado")
+        request = self.requests.get_by_id(attachment.request_id)
+        if not request or (user.role == UserRole.USER and user.id not in (request.requester_id, request.assignee_id)):
+            raise ForbiddenError('Sem acesso ao chamado')
         if user.role != UserRole.ADMIN and attachment.uploaded_by_id != user.id:
             raise ForbiddenError("Voce nao tem permissao para remover este anexo")
         path = self.upload_dir / attachment.stored_filename
         self.repo.delete(attachment)
-        if path.exists():
+        if path.resolve().is_relative_to(self.upload_dir.resolve()) and path.exists():
             os.remove(path)

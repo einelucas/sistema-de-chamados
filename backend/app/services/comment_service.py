@@ -27,7 +27,7 @@ class CommentService:
 
     def create_comment(self, request_id: int, payload: CommentCreate, user: User) -> Comment:
         self._ensure_request_exists(request_id)
-        comment = Comment(content=payload.content, author_id=user.id, request_id=request_id)
+        comment = Comment(content=payload.content, author_id=user.id, request_id=request_id, public_reply=payload.public_reply)
         comment = self.repo.create(comment)
         self.history.log(request_id, user.id, HistoryAction.COMENTARIO_ADICIONADO)
         return comment
@@ -36,6 +36,11 @@ class CommentService:
         comment = self.repo.get_by_id(comment_id)
         if not comment:
             raise NotFoundError("Comentario nao encontrado")
+        request = self.requests.get_by_id(comment.request_id)
+        if not request or (user.role == UserRole.USER and user.id not in (request.requester_id, request.assignee_id)):
+            raise ForbiddenError('Sem acesso ao chamado')
+        if comment.author.integration_identity:
+            raise ForbiddenError('Respostas do cliente não podem ser alteradas pelo atendimento')
         if comment.author_id != user.id and user.role != UserRole.ADMIN:
             raise ForbiddenError("Voce so pode alterar seus proprios comentarios")
         return comment

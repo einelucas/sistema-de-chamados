@@ -3,6 +3,8 @@ from datetime import datetime
 
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm.exc import StaleDataError
+from app.core.exceptions import ConflictError
 
 from app.models.enums import RequestCategory, RequestPriority, RequestStatus
 from app.models.request import Request
@@ -76,7 +78,7 @@ class RequestRepository:
         column = sort_columns.get(sort_by, Request.created_at)
         order_clause = column.asc() if sort_order == "asc" else column.desc()
 
-        stmt = stmt.order_by(order_clause).offset(skip).limit(limit)
+        stmt = stmt.order_by(order_clause, Request.id.desc()).offset(skip).limit(limit)
         items = self.db.execute(stmt).unique().scalars().all()
         return list(items), total
 
@@ -86,7 +88,11 @@ class RequestRepository:
 
     def create(self, request: Request) -> Request:
         self.db.add(request)
-        self.db.commit()
+        try:
+            self.db.commit()
+        except StaleDataError:
+            self.db.rollback()
+            raise ConflictError('Registro atualizado por outro usuário. Recarregue antes de salvar.')
         self.db.refresh(request)
         return request
 
