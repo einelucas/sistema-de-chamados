@@ -8,8 +8,8 @@ from app.models.enums import UserRole
 
 def bootstrap_admin(db:Session):
     if not settings.BOOTSTRAP_ADMIN or not settings.is_production:return
-    if len(settings.ADMIN_PASSWORD.encode("utf-8")) not in range(16,73):
-        raise RuntimeError("Configure uma senha temporária de 16 a 72 bytes.")
+    if len(settings.ADMIN_PASSWORD.encode("utf-8")) not in range(12,73):
+        raise RuntimeError("Configure uma senha temporária de 12 a 72 bytes.")
     if db.scalar(select(User.id).limit(1)) is not None:return
     if db.bind.dialect.name=="postgresql":
         db.execute(text("SELECT pg_advisory_xact_lock(734019621)"))
