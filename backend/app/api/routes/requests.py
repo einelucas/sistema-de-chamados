@@ -32,6 +32,9 @@ def list_requests(
     category: RequestCategory | None = Query(default=None),
     requester_id: int | None = Query(default=None),
     assignee_id: int | None = Query(default=None),
+    company_id: str | None = Query(default=None, max_length=36),
+    module_slug: str | None = Query(default=None, max_length=100),
+    origin: str | None = Query(default=None, pattern="^(nexotiva|internal)$"),
     sort_by: str = Query(default="created_at"),
     sort_order: str = Query(default="desc", pattern="^(asc|desc)$"),
     current_user: User = Depends(get_current_user),
@@ -39,7 +42,7 @@ def list_requests(
 ) -> PaginatedResponse[RequestListItem]:
     items, total = RequestService(db).list_requests(
         current_user, page, page_size, search, status, priority, category,
-        requester_id, assignee_id, sort_by, sort_order,
+        requester_id, assignee_id, sort_by, sort_order, company_id, module_slug, origin,
     )
     return PaginatedResponse(
         items=[RequestListItem.model_validate(r) for r in items],
@@ -49,6 +52,16 @@ def list_requests(
         total_pages=total_pages(total, page_size),
     )
 
+
+@router.get("/contexts", summary="Empresas e módulos de atendimento")
+def list_contexts(current_user:User=Depends(get_current_user),db:Session=Depends(get_db)):
+    from sqlalchemy import select
+    from app.models.nexotiva_ticket import NexotivaTicket
+    from app.models.enums import UserRole
+    if current_user.role not in (UserRole.ADMIN,UserRole.ANALYST):
+        return []
+    rows=db.execute(select(NexotivaTicket.company_id,NexotivaTicket.company_name,NexotivaTicket.module_slug,NexotivaTicket.module_name).distinct().order_by(NexotivaTicket.company_name,NexotivaTicket.module_name))
+    return [{"company_id":r[0],"company_name":r[1],"module_slug":r[2],"module_name":r[3]} for r in rows]
 
 @router.post("", response_model=RequestOut, status_code=201, summary="Cria uma nova solicitacao")
 def create_request(

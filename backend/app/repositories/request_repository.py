@@ -8,6 +8,7 @@ from app.core.exceptions import ConflictError
 
 from app.models.enums import RequestCategory, RequestPriority, RequestStatus
 from app.models.request import Request
+from app.models.nexotiva_ticket import NexotivaTicket
 
 
 class RequestFilters:
@@ -19,6 +20,9 @@ class RequestFilters:
         category: RequestCategory | None = None,
         requester_id: int | None = None,
         assignee_id: int | None = None,
+        company_id: str | None = None,
+        module_slug: str | None = None,
+        origin: str | None = None,
     ) -> None:
         self.search = search
         self.status = status
@@ -26,6 +30,7 @@ class RequestFilters:
         self.category = category
         self.requester_id = requester_id
         self.assignee_id = assignee_id
+        self.company_id=company_id;self.module_slug=module_slug;self.origin=origin
 
 
 class RequestRepository:
@@ -40,6 +45,11 @@ class RequestRepository:
         )
 
     def _apply_filters(self, stmt: Select, filters: RequestFilters) -> Select:
+        if filters.company_id or filters.module_slug or filters.origin:
+            sub=select(NexotivaTicket.request_id).where(NexotivaTicket.request_id==Request.id)
+            if filters.company_id:sub=sub.where(NexotivaTicket.company_id==filters.company_id)
+            if filters.module_slug:sub=sub.where(NexotivaTicket.module_slug==filters.module_slug)
+            stmt=stmt.where(~sub.exists() if filters.origin=='internal' else sub.exists())
         if filters.search:
             like = f"%{filters.search}%"
             stmt = stmt.where(or_(Request.title.ilike(like), Request.description.ilike(like)))

@@ -43,6 +43,7 @@ class Request(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    nexotiva = relationship('NexotivaTicket', uselist=False, lazy='selectin')
     requester = relationship("User", back_populates="requests_created", foreign_keys=[requester_id])
     assignee = relationship("User", back_populates="requests_assigned", foreign_keys=[assignee_id])
     comments = relationship("Comment", back_populates="request", cascade="all, delete-orphan")

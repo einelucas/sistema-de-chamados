@@ -10,12 +10,21 @@ function update<K extends keyof RequestFilters>(key: K, value: RequestFilters[K]
   emit('change')
 }
 
+const {isAnalystOrAdmin}=useAuth()
+const {$api}=useNuxtApp()
+type Context={company_id:string;company_name:string;module_slug:string;module_name:string}
+const contexts=ref<Context[]>([])
+const companies=computed(()=>Array.from(new Map(contexts.value.map(c=>[c.company_id,c.company_name])).entries()))
+const modules=computed(()=>Array.from(new Map(contexts.value.filter(c=>!props.modelValue.company_id||c.company_id===props.modelValue.company_id).map(c=>[c.module_slug,c.module_name])).entries()))
+onMounted(async()=>{if(isAnalystOrAdmin.value){try{contexts.value=await $api<Context[]>('/requests/contexts')}catch{}}})
+function company(value:string){emit('update:modelValue',{...props.modelValue,company_id:value,module_slug:'',origin:value?'nexotiva':'',page:1});emit('change')}
 let searchTimeout: ReturnType<typeof setTimeout>
 function onSearchInput(event: Event) {
   const value = (event.target as HTMLInputElement).value
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => update('search', value), 350)
 }
+onBeforeUnmount(()=>clearTimeout(searchTimeout))
 </script>
 
 <template>
@@ -31,6 +40,8 @@ function onSearchInput(event: Event) {
       >
     </div>
 
+    <label v-if="isAnalystOrAdmin" class="filter-control"><span>Empresa</span><select :value="modelValue.company_id||''" @change="company(($event.target as HTMLSelectElement).value)"><option value="">Todas</option><option v-for="[id,name] in companies" :key="id" :value="id">{{name}}</option></select></label>
+    <label v-if="isAnalystOrAdmin" class="filter-control"><span>Módulo</span><select :value="modelValue.module_slug||''" @change="update('module_slug',($event.target as HTMLSelectElement).value)"><option value="">Todos</option><option v-for="[id,name] in modules" :key="id" :value="id">{{name}}</option></select></label>
     <label class="filter-control">
       <span>Status</span>
       <select :value="modelValue.status" @change="update('status', ($event.target as HTMLSelectElement).value as any)">
@@ -80,7 +91,7 @@ function onSearchInput(event: Event) {
 <style scoped>
 .filters-bar {
   display: grid;
-  grid-template-columns: minmax(250px, 1.75fr) repeat(4, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
   gap: 12px;
   padding: 15px;
   margin-bottom: 16px;

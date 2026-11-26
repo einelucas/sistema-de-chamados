@@ -7,6 +7,8 @@ export type RequestStatus = 'ABERTA' | 'EM_ANDAMENTO' | 'AGUARDANDO' | 'CONCLUID
 
 export interface RequestItem {
   id: number
+  version: number
+  nexotiva?: { company_id:string; company_name:string; user_name:string; user_email:string; module_slug:string; module_name:string } | null
   title: string
   description: string
   category: RequestCategory
@@ -31,6 +33,7 @@ export interface RequestCreatePayload {
 }
 
 export interface RequestUpdatePayload {
+  expected_version?: number
   title?: string
   description?: string
   category?: RequestCategory
@@ -38,6 +41,9 @@ export interface RequestUpdatePayload {
 }
 
 export interface RequestFilters {
+  company_id?: string
+  module_slug?: string
+  origin?: 'nexotiva' | 'internal' | ''
   page?: number
   page_size?: number
   search?: string
