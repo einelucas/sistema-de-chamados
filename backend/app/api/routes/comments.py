@@ -8,12 +8,14 @@ from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentOut, CommentUpdate
 from app.schemas.common import MessageResponse
 from app.services.comment_service import CommentService
+from app.services.request_service import RequestService
 
 router = APIRouter(tags=["Comentarios"])
 
 
 @router.get("/requests/{request_id}/comments", response_model=list[CommentOut], summary="Lista comentarios")
 def list_comments(request_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    RequestService(db).get_request(request_id, current_user)
     return CommentService(db).list_comments(request_id)
 
 
@@ -26,6 +28,7 @@ def create_comment(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    RequestService(db).get_request(request_id, current_user)
     return CommentService(db).create_comment(request_id, payload, current_user)
 
 

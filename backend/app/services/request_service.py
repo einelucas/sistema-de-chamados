@@ -71,7 +71,7 @@ class RequestService:
         )
         # Usuario comum so pode ver solicitacoes das quais participa
         if user.role == UserRole.USER:
-            filters.requester_id = requester_id or user.id
+            filters.requester_id = user.id
         skip = (page - 1) * page_size
         items, total = self.repo.list_paginated(filters, skip, page_size, sort_by, sort_order)
         if user.role == UserRole.USER:

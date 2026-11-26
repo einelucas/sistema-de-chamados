@@ -5,4 +5,6 @@ from app.models.history import RequestHistory
 from app.models.request import Request
 from app.models.user import User
 
-__all__ = ["User", "Request", "Comment", "RequestHistory", "Attachment"]
+from app.models.nexotiva_ticket import NexotivaTicket
+
+__all__ = ["User", "Request", "Comment", "RequestHistory", "Attachment", "NexotivaTicket"]
