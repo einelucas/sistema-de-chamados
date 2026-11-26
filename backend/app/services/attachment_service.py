@@ -29,7 +29,7 @@ class AttachmentService:
             raise NotFoundError("Solicitacao nao encontrada")
         return self.repo.list_by_request(request_id)
 
-    def upload(self, request_id: int, file: UploadFile, user: User) -> Attachment:
+    def upload(self, request_id: int, file: UploadFile, user: User, shared_with_customer: bool=False) -> Attachment:
         if not self.requests.get_by_id(request_id):
             raise NotFoundError("Solicitacao nao encontrada")
 
@@ -38,8 +38,9 @@ class AttachmentService:
         if extension not in settings.allowed_upload_extensions_list:
             raise AppError(f"Tipo de arquivo nao permitido: {extension}")
 
-        contents = file.file.read(settings.MAX_UPLOAD_SIZE + 1)
-        if len(contents) > settings.MAX_UPLOAD_SIZE:
+        limit=min(settings.MAX_UPLOAD_SIZE,3*1024*1024) if shared_with_customer or settings.is_production else settings.MAX_UPLOAD_SIZE
+        contents = file.file.read(limit + 1)
+        if len(contents) > limit:
             raise AppError("Arquivo excede o tamanho maximo permitido")
 
         # Gera um nome de arquivo seguro e unico para evitar sobrescrita ou path traversal
@@ -53,6 +54,7 @@ class AttachmentService:
             content_type=file.content_type or "application/octet-stream",
             size_bytes=len(contents),
             file_content=contents,
+            shared_with_customer=shared_with_customer,
         )
         attachment = self.repo.create(attachment)
         self.history.log(request_id, user.id, HistoryAction.ANEXO_ADICIONADO, new_value=original_name)

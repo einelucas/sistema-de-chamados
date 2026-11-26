@@ -28,3 +28,16 @@ def test_public_replies_scope_and_shadow_protection(client, db_session, admin_us
     assert client.post(url,params=scope,json=msg,headers=headers).status_code==201
     assert client.post(url,params=scope,json={**msg,"content":"Outro"},headers=headers).status_code==409
     assert len(client.get(url,params=scope,headers=headers).json())==2
+    import base64,io
+    private=client.post(f"/api/v1/requests/{tid}/attachments",files={"file":("private.txt",io.BytesIO(b"internal"),"text/plain")},headers=admin)
+    assert private.status_code==201
+    attach=f"{base}/{tid}/attachments"
+    assert client.get(attach,params=scope,headers=headers).json()==[]
+    payload={"filename":"public.txt","content_base64":base64.b64encode(b"customer").decode(),"client_request_id":str(uuid4())}
+    result=client.post(attach,params=scope,json=payload,headers=headers)
+    assert result.status_code==201,result.text
+    aid=result.json()["id"]
+    assert client.post(attach,params=scope,json=payload,headers=headers).json()["id"]==aid
+    assert client.get(f"{attach}/{private.json()['id']}",params=scope,headers=headers).status_code==404
+    assert client.get(f"{attach}/{aid}",params={**scope,"user_id":str(uuid4())},headers=headers).status_code==404
+    assert client.get(f"{attach}/{aid}",params=scope,headers=headers).json()["content_base64"]==payload["content_base64"]

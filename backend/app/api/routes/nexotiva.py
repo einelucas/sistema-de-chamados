@@ -1,5 +1,10 @@
 """Server-to-server API; never expose the integration token to a browser."""
 import hashlib
+import base64
+import binascii
+import json
+from pathlib import Path
+from uuid import uuid4
 import secrets
 from typing import Annotated, Literal
 from uuid import UUID
@@ -85,11 +90,17 @@ def get_ticket(ticket_id: int, response: Response, company_id: UUID | Literal["a
         raise HTTPException(404, "Chamado não encontrado")
     return serialize(row)
 
+def fingerprint(body):
+    original=body.model_dump(mode="json",include={"title","description","category","priority","module_slug"})
+    return hashlib.sha256(json.dumps(original,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()).hexdigest()
+
 def replay(row, body):
     r, link = row
     if r.is_deleted:
         raise HTTPException(409, "Chamado anterior arquivado")
-    if (r.title, r.description, r.category, link.module_slug) != (body.title, body.description, body.category, body.module_slug):
+    if link.payload_hash and link.payload_hash != fingerprint(body):
+        raise HTTPException(409, "Identificador já utilizado com dados diferentes")
+    if not link.payload_hash and (r.title, r.description, r.category, link.module_slug) != (body.title, body.description, body.category, body.module_slug):
         raise HTTPException(409, "Identificador já utilizado com dados diferentes")
     return serialize(row)
 
@@ -141,6 +152,63 @@ def post_reply(ticket_id:int,body:ReplyInput,response:Response,company_id:UUID|L
         raise
     return public_comment(c,r.requester_id)
 
+MAX_SHARED_BYTES=3*1024*1024
+
+class SharedFileInput(BaseModel):
+    model_config=ConfigDict(extra="forbid")
+    filename:str=Field(min_length=1,max_length=255)
+    content_base64:str=Field(min_length=1,max_length=4*((MAX_SHARED_BYTES+2)//3))
+    client_request_id:UUID
+
+def file_info(row):
+    return {"id":row.id,"filename":row.original_filename,"size_bytes":row.size_bytes,"created_at":row.created_at}
+
+@router.get("/{ticket_id}/attachments")
+def list_shared_files(ticket_id:int,response:Response,company_id:UUID|Literal["account"],user_id:UUID,db:Session=Depends(get_db)):
+    response.headers["Cache-Control"]="no-store"
+    r,_=ticket_or_404(db,company_id,user_id,ticket_id)
+    return [file_info(a) for a in db.scalars(select(Attachment).where(Attachment.request_id==r.id,Attachment.shared_with_customer.is_(True),Attachment.file_content.is_not(None)).order_by(Attachment.created_at,Attachment.id))]
+
+@router.get("/{ticket_id}/attachments/{attachment_id}")
+def download_shared_file(ticket_id:int,attachment_id:int,response:Response,company_id:UUID|Literal["account"],user_id:UUID,db:Session=Depends(get_db)):
+    response.headers["Cache-Control"]="no-store"
+    r,_=ticket_or_404(db,company_id,user_id,ticket_id)
+    a=db.scalar(select(Attachment).where(Attachment.request_id==r.id,Attachment.id==attachment_id,Attachment.shared_with_customer.is_(True)))
+    if not a or a.file_content is None:raise HTTPException(404,"Anexo não encontrado")
+    return {**file_info(a),"content_base64":base64.b64encode(a.file_content).decode("ascii")}
+
+@router.post("/{ticket_id}/attachments",status_code=201)
+def upload_shared_file(ticket_id:int,body:SharedFileInput,response:Response,company_id:UUID|Literal["account"],user_id:UUID,db:Session=Depends(get_db)):
+    response.headers["Cache-Control"]="no-store"
+    r,_=ticket_or_404(db,company_id,user_id,ticket_id)
+    name=body.filename.replace("\\\\","/").rsplit("/",1)[-1]
+    extension=Path(name).suffix.lower()
+    if extension not in settings.allowed_upload_extensions_list or any(ord(ch)<32 for ch in name):
+        raise HTTPException(422,"Arquivo inválido")
+    try: data=base64.b64decode(body.content_base64,validate=True)
+    except (ValueError,binascii.Error):raise HTTPException(422,"Arquivo inválido")
+    if not data or len(data)>min(settings.MAX_UPLOAD_SIZE,MAX_SHARED_BYTES):raise HTTPException(422,"Arquivo excede o limite")
+    nonce=str(body.client_request_id)
+    def existing():
+        return db.scalar(select(Attachment).where(Attachment.request_id==r.id,Attachment.client_request_id==nonce))
+    def replay_file(a):
+        if a.uploaded_by_id!=r.requester_id or a.original_filename!=name or a.file_content!=data or not a.shared_with_customer:raise HTTPException(409,"Identificador já utilizado")
+        return file_info(a)
+    old=existing()
+    if old:return replay_file(old)
+    if r.status in (RequestStatus.CONCLUIDA,RequestStatus.CANCELADA):raise HTTPException(409,"Chamado encerrado")
+    try:
+        a=Attachment(request_id=r.id,uploaded_by_id=r.requester_id,original_filename=name,stored_filename=uuid4().hex+extension,content_type="application/octet-stream",size_bytes=len(data),file_content=data,shared_with_customer=True,client_request_id=nonce)
+        db.add(a)
+        db.add(RequestHistory(request_id=r.id,user_id=r.requester_id,action=HistoryAction.ANEXO_ADICIONADO,new_value=name))
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        old=existing()
+        if old:return replay_file(old)
+        raise
+    return file_info(a)
+
 @router.post("", status_code=201)
 def create_ticket(body: TicketInput, response: Response, db: Session = Depends(get_db)):
     response.headers["Cache-Control"] = "no-store"
@@ -173,7 +241,7 @@ def create_ticket(body: TicketInput, response: Response, db: Session = Depends(g
         db.flush()
         link = NexotivaTicket(request_id=r.id, company_id=cid, company_name=body.company_name,
                              user_id=uid, user_name=body.user_name, user_email=body.user_email,
-                             module_slug=body.module_slug, module_name=body.module_name, client_request_id=nonce)
+                             module_slug=body.module_slug, module_name=body.module_name, client_request_id=nonce, payload_hash=fingerprint(body))
         db.add(link)
         db.add(RequestHistory(request_id=r.id, user_id=actor.id, action=HistoryAction.CRIACAO, new_value=r.title))
         db.commit()

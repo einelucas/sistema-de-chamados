@@ -1,5 +1,5 @@
 """Rotas de anexos: upload, listagem, download protegido e remocao."""
-from fastapi import APIRouter, Depends, UploadFile
+from fastapi import APIRouter, Depends, Form, UploadFile
 from fastapi.responses import FileResponse, Response
 from urllib.parse import quote
 from sqlalchemy.orm import Session
@@ -32,11 +32,12 @@ def list_attachments(request_id: int, current_user: User = Depends(get_current_u
 def upload_attachment(
     request_id: int,
     file: UploadFile,
+    shared_with_customer: bool = Form(False),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     RequestService(db).get_request(request_id, current_user)
-    return AttachmentService(db).upload(request_id, file, current_user)
+    return AttachmentService(db).upload(request_id, file, current_user, shared_with_customer)
 
 
 @router.get("/attachments/{attachment_id}/download", summary="Baixa um anexo (rota protegida)")

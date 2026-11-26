@@ -19,3 +19,5 @@ class NexotivaTicket(Base):
     module_slug: Mapped[str] = mapped_column(String(100))
     module_name: Mapped[str] = mapped_column(String(120))
     client_request_id: Mapped[str] = mapped_column(String(36))
+
+    payload_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
