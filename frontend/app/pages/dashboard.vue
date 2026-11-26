@@ -7,7 +7,9 @@ const { getSummary } = useDashboard()
 const toast = useToast()
 const themeStore = useThemeStore()
 
-const { data: summary, pending, error, refresh } = await useAsyncData('dashboard-summary', () => getSummary())
+const {user}=useAuth()
+const { data: summary, pending, error, refresh } = await useAsyncData('dashboard-summary:'+user.value?.id, () => getSummary())
+useSilentRefresh(async()=>{if(!pending.value)await refresh()})
 
 watch(error, (value) => {
   if (value) toast.error(extractErrorMessage(value, 'Não foi possível carregar o dashboard.'))

@@ -9,9 +9,10 @@ export function useAttachments() {
     return $api<Attachment[]>(`/requests/${requestId}/attachments`)
   }
 
-  function uploadAttachment(requestId: number, file: File) {
+  function uploadAttachment(requestId: number, file: File, shared=false) {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('shared_with_customer', String(shared))
     return $api<Attachment>(`/requests/${requestId}/attachments`, { method: 'POST', body: formData })
   }
 

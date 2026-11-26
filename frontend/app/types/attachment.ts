@@ -7,6 +7,7 @@ export interface Attachment {
   original_filename: string
   content_type: string
   size_bytes: number
+  shared_with_customer:boolean
   uploaded_by: User
   created_at: string
 }

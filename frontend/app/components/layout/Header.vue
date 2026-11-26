@@ -16,7 +16,7 @@ const titles: { test: (path: string) => boolean; title: string; eyebrow: string 
   { test: (path) => path === '/perfil', title: 'Meu perfil', eyebrow: 'Conta' },
 ]
 
-const pageInfo = computed(() => titles.find((item) => item.test(route.path)) || { title: 'Central', eyebrow: 'Sistema interno' })
+const pageInfo = computed(() => titles.find((item) => item.test(route.path)) || { title: 'Central', eyebrow: 'Nexotiva' })
 const roleLabel = computed(() => ({ ADMIN: 'Administrador', ANALYST: 'Analista', USER: 'Usuário' })[user.value?.role || 'USER'])
 const isDark = computed(() => themeStore.isDark)
 const themeActionLabel = computed(() => isDark.value ? 'Ativar tema claro' : 'Ativar tema escuro')
@@ -49,7 +49,7 @@ watch(() => route.path, () => {
       </div>
 
       <div class="header-actions">
-        <span class="environment-chip"><span /> Ambiente interno</span>
+        <span class="environment-chip"><span /> Atendimento Nexotiva</span>
 
         <button
           class="theme-toggle"

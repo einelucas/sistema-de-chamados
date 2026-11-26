@@ -195,7 +195,7 @@ async function confirmDelete() {
           </section>
 
           <section class="card content-card">
-            <SolicitacoesAttachmentsSection :request-id="request.id" />
+            <SolicitacoesAttachmentsSection :request-id="request.id" :integrated="!!request.nexotiva" />
           </section>
         </main>
 
