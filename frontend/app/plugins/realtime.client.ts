@@ -1,9 +1,12 @@
 export default defineNuxtPlugin(nuxt=>{
   const auth=useAuthStore()
+  const api=nuxt.$api as <T>(path:string,options?:{force?:boolean})=>Promise<T>
+  const clear=nuxt.$clearApi as ()=>void
+  let fallback:ReturnType<typeof setTimeout>|undefined
   let source:EventSource|null=null,retry:ReturnType<typeof setTimeout>|undefined,revision='',attempts=0,identity:number|null=null
   const status=useState('central-sync-status',()=> 'idle')
   function stop(){source?.close();source=null;clearTimeout(retry)}
-  function refresh(){nuxt.$clearApi();window.dispatchEvent(new Event('central:sync'))}
+  function refresh(){clear();window.dispatchEvent(new Event('central:sync'))}
   function connect(){
     if(!auth.user||source||document.visibilityState!=='visible'||!navigator.onLine)return
     status.value='connecting'
@@ -23,6 +26,15 @@ export default defineNuxtPlugin(nuxt=>{
   window.addEventListener('offline',()=>{stop();status.value='offline'})
   document.addEventListener('visibilitychange',focus)
   window.addEventListener('central:changed',refresh)
-  // Authorized version checks also drain the persisted webhook outbox on serverless.
-  useSilentRefresh(async()=>{if(auth.user){try{const v=await nuxt.$api<{revision:string}>('/sync/version',{force:true});if(v.revision!==revision){revision=v.revision;refresh()}}catch{}}},15000)
+  // No component lifecycle hooks in plugins. Reconcile versions even when SSE
+  // is unavailable and let authorized checks drain the outbox.
+  async function poll(){
+    const current=auth.user?.id
+    if(current&&navigator.onLine&&document.visibilityState==='visible'){
+      try{const v=await api<{revision:string}>('/sync/version',{force:true});if(auth.user?.id===current&&v.revision!==revision){revision=v.revision;refresh()}}catch{}
+    }
+    if(auth.user)fallback=setTimeout(poll,15000)
+  }
+  watch(()=>auth.user?.id,()=>{clearTimeout(fallback);if(auth.user)fallback=setTimeout(poll,15000)},{immediate:true})
+  if(import.meta.hot)import.meta.hot.dispose(()=>{stop();clearTimeout(fallback)})
 })
