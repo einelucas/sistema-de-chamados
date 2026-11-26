@@ -24,14 +24,7 @@ function isActive(path: string) {
 <template>
   <aside class="sidebar">
     <NuxtLink to="/dashboard" class="brand" aria-label="Ir para o dashboard">
-      <span class="brand-mark">
-        <span class="brand-mark-line" />
-        <span class="brand-mark-dot" />
-      </span>
-      <span class="brand-copy">
-        <strong>CENTRAL</strong>
-        <span>SOLICITAÇÕES</span>
-      </span>
+      <img src="/brand/logo.png" class="nexotiva-logo" alt="Nexotiva" />
     </NuxtLink>
 
     <div class="nav-section">
@@ -56,7 +49,7 @@ function isActive(path: string) {
         <span class="status-dot" />
         <div>
           <strong>Sistema operacional</strong>
-          <span>Ambiente interno</span>
+          <span>Central de atendimento</span>
         </div>
       </div>
       <span class="version">Central v1.0</span>
@@ -128,7 +121,7 @@ function isActive(path: string) {
 }
 .brand-copy strong {
   color: var(--color-primary);
-  font-family: 'Aclonica', 'Montserrat', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 0.98rem;
   font-weight: 400;
   letter-spacing: 0.06em;

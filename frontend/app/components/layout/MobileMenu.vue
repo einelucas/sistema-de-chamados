@@ -28,8 +28,8 @@ function close() {
     <div v-if="modelValue" class="mobile-overlay" @click.self="close">
       <aside class="mobile-panel">
         <div class="mobile-brand">
-          <span class="brand-mark"><span /></span>
-          <div><strong>CENTRAL</strong><small>SOLICITAÇÕES</small></div>
+          <img src="/brand/logo.png" class="nexotiva-logo" alt="Nexotiva" />
+          <div><strong>NEXOTIVA</strong><small>CHAMADOS</small></div>
           <button aria-label="Fechar menu" @click="close"><UiIcon name="close" :size="19" /></button>
         </div>
 
@@ -103,7 +103,7 @@ function close() {
 }
 .mobile-brand strong {
   color: var(--color-primary);
-  font-family: 'Aclonica', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 0.9rem;
   font-weight: 400;
 }

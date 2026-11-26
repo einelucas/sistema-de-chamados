@@ -32,15 +32,15 @@ async function handleSubmit() {
   <main class="login-page">
     <section class="login-intro">
       <div class="intro-brand">
-        <span class="brand-mark"><span class="brand-line" /><span class="brand-dot" /></span>
+        <img src="/brand/logo.png" class="nexotiva-logo" alt="Nexotiva" />
         <div>
-          <strong>CENTRAL</strong>
+          <strong>NEXOTIVA</strong>
           <span>SOLICITAÇÕES</span>
         </div>
       </div>
 
       <div class="intro-content">
-        <span class="intro-kicker">Gestão interna centralizada</span>
+        <span class="intro-kicker">Atendimento centralizado</span>
         <h1>Solicitações organizadas.<br><em>Equipes em sintonia.</em></h1>
         <p>
           Acompanhe prioridades, responsáveis, prazos e histórico em um ambiente único,
@@ -59,7 +59,7 @@ async function handleSubmit() {
         </div>
       </div>
 
-      <p class="intro-footer">Sistema interno · Central de Solicitações</p>
+      <p class="intro-footer">Nexotiva · Central de Chamados</p>
     </section>
 
     <section class="login-area">
@@ -169,7 +169,7 @@ async function handleSubmit() {
 }
 .intro-brand strong {
   color: var(--color-primary);
-  font-family: 'Aclonica', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 1.05rem;
   font-weight: 400;
   letter-spacing: 0.07em;

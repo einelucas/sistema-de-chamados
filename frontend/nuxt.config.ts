@@ -27,7 +27,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "Central de Solicitações",
+      title: "Nexotiva | Central de Chamados",
       script: [
         {
           innerHTML:
@@ -40,7 +40,7 @@ export default defineNuxtConfig({
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         {
           name: "description",
-          content: "Sistema interno de gerenciamento de solicitações",
+          content: "Central de atendimento Nexotiva",
         },
       ],
     },

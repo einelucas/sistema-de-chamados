@@ -13,6 +13,7 @@ import {
 } from 'chart.js'
 
 ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale, Filler)
+ChartJS.defaults.font.family = 'Manrope, system-ui, sans-serif'
 
 const props = defineProps<{ labels: string[]; values: number[] }>()
 const themeStore = useThemeStore()
@@ -80,13 +81,13 @@ const chartOptions = computed(() => ({
     x: {
       grid: { display: false },
       border: { display: false },
-      ticks: { color: chartTheme.value.muted, font: { family: 'Montserrat', size: 10 } },
+      ticks: { color: chartTheme.value.muted, font: { family: 'Manrope', size: 10 } },
     },
     y: {
       beginAtZero: true,
       border: { display: false },
       grid: { color: chartTheme.value.grid },
-      ticks: { precision: 0, color: chartTheme.value.muted, font: { family: 'Montserrat', size: 10 } },
+      ticks: { precision: 0, color: chartTheme.value.muted, font: { family: 'Manrope', size: 10 } },
     },
   },
 }))

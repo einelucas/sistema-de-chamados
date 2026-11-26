@@ -3,6 +3,7 @@ import { Doughnut } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js'
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement)
+ChartJS.defaults.font.family = 'Manrope, system-ui, sans-serif'
 
 const props = defineProps<{ labels: string[]; values: number[] }>()
 const themeStore = useThemeStore()
@@ -62,7 +63,7 @@ const chartOptions = computed(() => ({
         padding: 16,
         usePointStyle: true,
         pointStyle: 'circle' as const,
-        font: { family: 'Montserrat', size: 10 },
+        font: { family: 'Manrope', size: 10 },
       },
     },
   },
