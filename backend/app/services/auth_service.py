@@ -17,7 +17,7 @@ class AuthService:
         user = self.users.get_by_email(payload.email)
         if not user or not verify_password(payload.password, user.hashed_password):
             raise UnauthorizedError("E-mail ou senha invalidos")
-        if not user.is_active:
+        if not user.is_active or user.integration_identity or user.email.lower().endswith('@integration.example.com'):
             raise UnauthorizedError("Usuario inativo. Contate o administrador.")
 
         token = create_access_token(subject=str(user.id), extra_claims={"role": user.role.value})

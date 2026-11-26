@@ -14,6 +14,8 @@ from app.core.config import settings
 from app.core.security import hash_password
 from app.models.enums import HistoryAction, RequestCategory, RequestPriority, RequestStatus, UserRole
 from app.models.history import RequestHistory
+from app.models.comment import Comment
+from app.models.attachment import Attachment
 from app.models.nexotiva_ticket import NexotivaTicket
 from app.models.request import Request
 from app.models.user import User
@@ -83,15 +85,71 @@ def get_ticket(ticket_id: int, response: Response, company_id: UUID | Literal["a
         raise HTTPException(404, "Chamado não encontrado")
     return serialize(row)
 
+def replay(row, body):
+    r, link = row
+    if r.is_deleted:
+        raise HTTPException(409, "Chamado anterior arquivado")
+    if (r.title, r.description, r.category, link.module_slug) != (body.title, body.description, body.category, body.module_slug):
+        raise HTTPException(409, "Identificador já utilizado com dados diferentes")
+    return serialize(row)
+
+def ticket_or_404(db, cid, uid, ticket_id):
+    row=db.execute(scoped(str(cid),str(uid)).where(Request.id==ticket_id)).one_or_none()
+    if row is None: raise HTTPException(404,"Chamado não encontrado")
+    return row
+
+def public_comment(c, requester_id):
+    return {"id":c.id,"content":c.content,"author":"customer" if c.author_id==requester_id else "support",
+            "created_at":c.created_at,"updated_at":c.updated_at}
+
+class ReplyInput(BaseModel):
+    model_config=ConfigDict(extra="forbid",str_strip_whitespace=True)
+    content:str=Field(min_length=1,max_length=4000)
+    client_request_id:UUID
+
+@router.get("/{ticket_id}/comments")
+def get_replies(ticket_id:int,response:Response,company_id:UUID|Literal["account"],user_id:UUID,db:Session=Depends(get_db)):
+    response.headers["Cache-Control"]="no-store"
+    r,_=ticket_or_404(db,company_id,user_id,ticket_id)
+    rows=db.scalars(select(Comment).where(Comment.request_id==r.id,Comment.public_reply.is_(True)).order_by(Comment.created_at,Comment.id))
+    return [public_comment(c,r.requester_id) for c in rows]
+
+@router.post("/{ticket_id}/comments",status_code=201)
+def post_reply(ticket_id:int,body:ReplyInput,response:Response,company_id:UUID|Literal["account"],user_id:UUID,db:Session=Depends(get_db)):
+    response.headers["Cache-Control"]="no-store"
+    r,_=ticket_or_404(db,company_id,user_id,ticket_id)
+    nonce=str(body.client_request_id)
+    def existing():
+        return db.scalar(select(Comment).where(Comment.request_id==r.id,Comment.client_request_id==nonce))
+    def replay_comment(c):
+        if c.author_id!=r.requester_id or c.content!=body.content or not c.public_reply:
+            raise HTTPException(409,"Identificador já utilizado")
+        return public_comment(c,r.requester_id)
+    old=existing()
+    if old:return replay_comment(old)
+    if r.status in (RequestStatus.CONCLUIDA,RequestStatus.CANCELADA):
+        raise HTTPException(409,"Chamado encerrado")
+    try:
+        c=Comment(request_id=r.id,author_id=r.requester_id,content=body.content,public_reply=True,client_request_id=nonce)
+        db.add(c)
+        db.add(RequestHistory(request_id=r.id,user_id=r.requester_id,action=HistoryAction.COMENTARIO_ADICIONADO))
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        old=existing()
+        if old:return replay_comment(old)
+        raise
+    return public_comment(c,r.requester_id)
+
 @router.post("", status_code=201)
 def create_ticket(body: TicketInput, response: Response, db: Session = Depends(get_db)):
     response.headers["Cache-Control"] = "no-store"
     cid, uid, nonce = str(body.company_id), str(body.user_id), str(body.client_request_id)
     def existing():
-        return db.execute(scoped(cid, uid).where(NexotivaTicket.client_request_id == nonce)).one_or_none()
+        return db.execute(select(Request,NexotivaTicket).join(NexotivaTicket,NexotivaTicket.request_id==Request.id).where(NexotivaTicket.company_id==cid,NexotivaTicket.user_id==uid,NexotivaTicket.client_request_id==nonce)).one_or_none()
     old = existing()
     if old:
-        return serialize(old)
+        return replay(old, body)
     # A disabled shadow identity allows the existing admin UI to show the requester
     # without granting Central credentials to a Nexotiva customer.
     digest = hashlib.sha256((cid + ":" + uid).encode()).hexdigest()
@@ -101,12 +159,12 @@ def create_ticket(body: TicketInput, response: Response, db: Session = Depends(g
         try:
             with db.begin_nested():
                 actor = User(name=(body.company_name + " · " + body.user_name)[:150], email=email,
-                             hashed_password=hash_password(secrets.token_urlsafe(32)), role=UserRole.USER, is_active=False)
+                             hashed_password=hash_password(secrets.token_urlsafe(32)), role=UserRole.USER, is_active=False, integration_identity=True)
                 db.add(actor)
                 db.flush()
         except IntegrityError:
             actor = db.scalar(select(User).where(User.email == email))
-    if actor is None or actor.is_active or actor.role != UserRole.USER:
+    if actor is None or actor.is_active or actor.role != UserRole.USER or not actor.integration_identity:
         raise HTTPException(409, "Identidade de integração incompatível")
     try:
         r = Request(title=body.title, description=body.description, category=body.category,

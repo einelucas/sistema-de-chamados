@@ -1,7 +1,7 @@
 """Modelo de usuario."""
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, String, func
+from sqlalchemy import false, Boolean, DateTime, Enum, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
@@ -17,6 +17,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role"), default=UserRole.USER, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    integration_identity: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
     theme_preference: Mapped[str] = mapped_column(
         String(20), default="light", server_default="light", nullable=False
     )

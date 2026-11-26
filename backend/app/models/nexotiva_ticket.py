@@ -8,6 +8,7 @@ class NexotivaTicket(Base):
     __table_args__ = (
         UniqueConstraint("company_id", "user_id", "client_request_id", name="uq_nexotiva_ticket_request"),
         Index("ix_nexotiva_ticket_scope", "company_id", "user_id"),
+        Index("ix_nexotiva_ticket_company_module", "company_id", "module_slug"),
     )
     request_id: Mapped[int] = mapped_column(ForeignKey("requests.id"), primary_key=True)
     company_id: Mapped[str] = mapped_column(String(36))
