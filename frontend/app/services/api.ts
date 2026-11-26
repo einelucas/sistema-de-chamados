@@ -22,6 +22,7 @@ export function createCentralApi(onUnauthorized:()=>void){
       for(let i=0;;i++){
         try{
           const res=await http.request<T>({url:path,method,data:options.body,params:query,responseType:options.responseType??'json',signal})
+          if(options.responseType!=='blob' && !String(res.headers['content-type']??'').includes('json'))throw new Error('A API retornou uma resposta inválida. Verifique a conexão e tente novamente.')
           if(current!==epoch||signal.aborted)throw new Error('Requisição cancelada')
           if(method!=='GET'){clear();if(!path.startsWith('/auth/'))window.dispatchEvent(new Event('central:changed'))}
           return res.data

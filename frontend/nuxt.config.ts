@@ -1,16 +1,12 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import { fileURLToPath } from 'node:url'
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
 
-  // Aplicacao interna autenticada, sem necessidade de SEO/SSR. A sessao e guardada em
-  // sessionStorage (so existe no navegador), entao o servidor nunca sabe se o usuario esta
-  // logado durante a renderizacao SSR -- isso causava um bug real de hidratacao: o servidor
-  // renderizava o layout de login (redirecionado pela middleware "auth"), e so depois, no
-  // navegador, a sessao era restaurada e a pagina certa era montada por cima, deixando o
-  // wrapper do layout errado (".auth-shell") por fora do conteudo real da pagina. Desativar
-  // o SSR remove essa classe inteira de bug: a aplicacao roda 100% no navegador.
+  // SPA client with a live Nitro server for the authenticated API gateway.
   ssr: false,
+  serverDir: fileURLToPath(new URL('./server', import.meta.url)),
+  nitro: { preset: process.env.VERCEL ? 'vercel' : 'node-server' },
 
   modules: ["@pinia/nuxt"],
 

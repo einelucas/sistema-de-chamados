@@ -19,7 +19,7 @@ export default defineEventHandler(async event => {
   if(path==='auth/login'&&method==='POST'){
     try{
       const login=await $fetch<{access_token:string;user:unknown}>(base+'/auth/login',{method:'POST',body:await readBody(event),retry:0,timeout:15000,redirect:'error'})
-      if(typeof login.access_token!=='string'||!login.user)throw createError({statusCode:502,statusMessage:'Resposta de login inválida'})
+      if(typeof login.access_token!=='string'||!login.user||typeof (login.user as {must_change_password?:unknown}).must_change_password!=='boolean')throw createError({statusCode:502,statusMessage:'Resposta de login inválida'})
       setCookie(event,cookie,login.access_token,{httpOnly:true,secure:getRequestURL(event,{xForwardedProto:true}).protocol==='https:',sameSite:'lax',path:'/',maxAge:3600})
       return {user:login.user}
     }catch(e){
@@ -32,6 +32,7 @@ export default defineEventHandler(async event => {
     const token=getCookie(event,cookie)
     if(!token)throw createError({statusCode:401,statusMessage:'Sessão necessária'})
     const result=await $fetch<{access_token:string;user:unknown}>(base+'/auth/change-password',{method:'POST',headers:{authorization:'Bearer '+token},body:await readBody(event),retry:0,timeout:15000,redirect:'error'})
+    if(typeof result.access_token!=='string'||!result.user||typeof (result.user as {must_change_password?:unknown}).must_change_password!=='boolean')throw createError({statusCode:502,statusMessage:'Resposta de autenticação inválida'})
     setCookie(event,cookie,result.access_token,{httpOnly:true,secure:getRequestURL(event,{xForwardedProto:true}).protocol==='https:',sameSite:'lax',path:'/',maxAge:3600})
     return {user:result.user}
   }

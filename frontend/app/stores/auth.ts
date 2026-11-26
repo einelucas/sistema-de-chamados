@@ -9,8 +9,8 @@ export const useAuthStore=defineStore('auth',{
     isAnalystOrAdmin:state=>state.user?.role==='ADMIN'||state.user?.role==='ANALYST',
   },
   actions:{
-    setSession(user:User){useNuxtApp().$resetApi();this.user=user;useThemeStore().syncFromUser(user)},
-    setUser(user:User){this.user=user;useThemeStore().syncFromUser(user)},
+    setSession(user:User){validateSessionUser(user);useNuxtApp().$resetApi();this.user=user;useThemeStore().syncFromUser(user)},
+    setUser(user:User){validateSessionUser(user);this.user=user;useThemeStore().syncFromUser(user)},
     expire(){
       useNuxtApp().$resetApi();this.user=null
       if(import.meta.client)void navigateTo('/login')

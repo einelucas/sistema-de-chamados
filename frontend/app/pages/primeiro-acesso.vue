@@ -11,7 +11,7 @@ async function save(){
   busy.value=true
   try{
     const result=await $api<{user:import('~/types/user').User}>('/auth/change-password',{method:'POST',body:{current_password:current.value,new_password:password.value}})
-    auth.setSession(result.user)
+    auth.setSession(validateSessionUser(result?.user))
     current.value='';password.value='';confirmation.value=''
     await navigateTo('/dashboard')
   }catch(e){error.value=extractErrorMessage(e,'Não foi possível alterar a senha.')}
