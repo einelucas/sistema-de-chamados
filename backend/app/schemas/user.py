@@ -40,6 +40,7 @@ class UserOut(UserBase):
     id: int
     role: UserRole
     is_active: bool
+    must_change_password: bool
     theme_preference: ThemePreference
     created_at: datetime
     updated_at: datetime

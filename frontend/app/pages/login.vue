@@ -18,8 +18,9 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await login(email.value, password.value)
-    await navigateTo((route.query.redirect as string) || '/dashboard')
+    const user=await login(email.value,password.value)
+    const redirect=typeof route.query.redirect==='string'&&route.query.redirect.startsWith('/')&&!route.query.redirect.startsWith('//')?route.query.redirect:'/dashboard'
+    await navigateTo(user.must_change_password?'/primeiro-acesso':redirect)
   } catch (error) {
     errorMessage.value = extractErrorMessage(error, 'E-mail ou senha inválidos.')
   } finally {

@@ -95,6 +95,8 @@ class UserService:
         user = self.get_user(user_id)
         reject_integration_user(user)
         user.hashed_password = hash_password(payload.new_password)
+        user.must_change_password=True
+        user.session_version+=1
         return self.repo.update(user)
 
     def set_active(self, user_id: int, is_active: bool, acting_user: User) -> User:

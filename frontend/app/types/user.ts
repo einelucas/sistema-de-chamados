@@ -8,6 +8,7 @@ export interface User {
   email: string
   role: UserRole
   is_active: boolean
+  must_change_password: boolean
   theme_preference: ThemePreference
   created_at: string
   updated_at: string

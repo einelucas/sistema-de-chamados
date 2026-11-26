@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
+    BOOTSTRAP_ADMIN: bool = False
     ADMIN_EMAIL: str = "admin@example.com"
     ADMIN_NAME: str = "Administrador"
     ADMIN_PASSWORD: str = "troque-esta-senha"

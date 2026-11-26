@@ -23,7 +23,7 @@ def snapshot(token):
     except (TypeError,ValueError,KeyError):return None
     with SessionLocal() as db:
         user=db.get(User,uid)
-        if not user or not user.is_active or user.integration_identity:return None
+        if not user or not user.is_active or user.integration_identity or user.must_change_password or claims.get('sv',1)!=user.session_version:return None
         return revision(db,user)
 
 @router.get("/events/stream")

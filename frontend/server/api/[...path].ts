@@ -28,6 +28,13 @@ export default defineEventHandler(async event => {
       throw createError({statusCode:status,statusMessage:status===401?'Credenciais inválidas':'Não foi possível iniciar a sessão',data:{detail:error.data?.detail}})
     }
   }
+  if(path==='auth/change-password'&&method==='POST'){
+    const token=getCookie(event,cookie)
+    if(!token)throw createError({statusCode:401,statusMessage:'Sessão necessária'})
+    const result=await $fetch<{access_token:string;user:unknown}>(base+'/auth/change-password',{method:'POST',headers:{authorization:'Bearer '+token},body:await readBody(event),retry:0,timeout:15000,redirect:'error'})
+    setCookie(event,cookie,result.access_token,{httpOnly:true,secure:getRequestURL(event,{xForwardedProto:true}).protocol==='https:',sameSite:'lax',path:'/',maxAge:3600})
+    return {user:result.user}
+  }
   if(path==='auth/logout'&&method==='POST'){
     deleteCookie(event,cookie,{path:'/',httpOnly:true,sameSite:'lax'})
     return {ok:true}

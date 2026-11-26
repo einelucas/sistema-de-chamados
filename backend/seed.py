@@ -24,6 +24,7 @@ def run_seed() -> None:
             hashed_password=hash_password(settings.ADMIN_PASSWORD),
             role=UserRole.ADMIN,
             is_active=True,
+            must_change_password=True,
         )
         db.add(admin)
         db.commit()
