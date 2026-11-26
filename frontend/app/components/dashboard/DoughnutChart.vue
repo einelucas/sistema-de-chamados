@@ -1,79 +1,18 @@
 <script setup lang="ts">
-import { Doughnut } from 'vue-chartjs'
-import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js'
-
-ChartJS.register(Title, Tooltip, Legend, ArcElement)
-ChartJS.defaults.font.family = 'Manrope, system-ui, sans-serif'
-
-const props = defineProps<{ labels: string[]; values: number[] }>()
-const themeStore = useThemeStore()
-
-const chartTheme = computed(() => themeStore.isDark
-  ? {
-      palette: ['#00c596', '#d7c156', '#f06b78', '#66a8ff', '#b69cff', '#3ad08f'],
-      surface: '#1b1f24',
-      tooltip: '#252b33',
-      tooltipTitle: '#fbfdfe',
-      tooltipBody: '#d9dde1',
-      border: '#39414b',
-      muted: '#8c949d',
-    }
-  : {
-      palette: ['#2563eb', '#c58a18', '#d93645', '#0284c7', '#7451c8', '#16864a'],
-      surface: '#ffffff',
-      tooltip: '#0f172a',
-      tooltipTitle: '#f8fafc',
-      tooltipBody: '#cbd5e1',
-      border: '#334155',
-      muted: '#64748b',
-    })
-
-const chartData = computed(() => ({
-  labels: props.labels,
-  datasets: [
-    {
-      data: props.values,
-      backgroundColor: props.labels.map((_, index) => chartTheme.value.palette[index % chartTheme.value.palette.length]),
-      hoverOffset: 7,
-      borderColor: chartTheme.value.surface,
-      borderWidth: 4,
-    },
-  ],
+import type { ApexOptions } from 'apexcharts'
+import { defineAsyncComponent } from 'vue'
+const ApexChart=defineAsyncComponent(()=>import('vue3-apexcharts').then(m=>m.default))
+const props=defineProps<{labels:string[];values:number[];color?:string}>()
+const theme=useThemeStore()
+const options=computed<ApexOptions>(()=>({
+  chart:{type:'donut',toolbar:{show:false},fontFamily:'Manrope, system-ui, sans-serif',background:'transparent',foreColor:theme.isDark?'#cbd5e1':'#64748b',animations:{enabled:false}},
+  theme:{mode:theme.isDark?'dark':'light'},
+  colors:['#304f7e','#eaa239','#c0392b','#007cc5','#8b73bd','#609346'],
+  dataLabels:{enabled:false},legend:{show:true,position:'bottom',fontSize:'12px'},
+  labels:props.labels,plotOptions:{pie:{donut:{size:'68%'}}},stroke:{width:2,colors:[theme.isDark?'#1b1f24':'#ffffff']},
+  tooltip:{theme:theme.isDark?'dark':'light'}
 }))
-
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  cutout: '68%',
-  plugins: {
-    tooltip: {
-      backgroundColor: chartTheme.value.tooltip,
-      titleColor: chartTheme.value.tooltipTitle,
-      bodyColor: chartTheme.value.tooltipBody,
-      borderColor: chartTheme.value.border,
-      borderWidth: 1,
-      padding: 12,
-    },
-    legend: {
-      position: 'bottom' as const,
-      labels: {
-        color: chartTheme.value.muted,
-        boxWidth: 9,
-        boxHeight: 9,
-        padding: 16,
-        usePointStyle: true,
-        pointStyle: 'circle' as const,
-        font: { family: 'Manrope', size: 10 },
-      },
-    },
-  },
-}))
+const series=computed(()=>props.values)
 </script>
-
-<template>
-  <div class="chart-canvas"><Doughnut :data="chartData" :options="chartOptions" /></div>
-</template>
-
-<style scoped>
-.chart-canvas { height: 270px; }
-</style>
+<template><div class="central-chart"><ApexChart v-if="values.length" type="donut" :height="270" :options="options" :series="series"/><div v-else class="chart-empty">Sem dados</div></div></template>
+<style scoped>.central-chart{min-width:0;min-height:270px}.chart-empty{display:grid;place-items:center;min-height:270px;color:var(--color-text-muted)}</style>

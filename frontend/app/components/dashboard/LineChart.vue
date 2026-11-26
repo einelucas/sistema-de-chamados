@@ -1,102 +1,18 @@
 <script setup lang="ts">
-import { Line } from 'vue-chartjs'
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  LineElement,
-  PointElement,
-  CategoryScale,
-  LinearScale,
-  Filler,
-} from 'chart.js'
-
-ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale, Filler)
-ChartJS.defaults.font.family = 'Manrope, system-ui, sans-serif'
-
-const props = defineProps<{ labels: string[]; values: number[] }>()
-const themeStore = useThemeStore()
-
-const chartTheme = computed(() => themeStore.isDark
-  ? {
-      primary: '#00c596',
-      fill: 'rgba(0, 197, 150, 0.10)',
-      surface: '#121418',
-      tooltip: '#252b33',
-      tooltipTitle: '#fbfdfe',
-      tooltipBody: '#d9dde1',
-      border: '#39414b',
-      muted: '#8c949d',
-      grid: 'rgba(140, 148, 157, 0.10)',
-    }
-  : {
-      primary: '#2563eb',
-      fill: 'rgba(37, 99, 235, 0.10)',
-      surface: '#ffffff',
-      tooltip: '#0f172a',
-      tooltipTitle: '#f8fafc',
-      tooltipBody: '#cbd5e1',
-      border: '#334155',
-      muted: '#64748b',
-      grid: 'rgba(100, 116, 139, 0.14)',
-    })
-
-const chartData = computed(() => ({
-  labels: props.labels,
-  datasets: [
-    {
-      label: 'Solicitações criadas',
-      data: props.values,
-      borderColor: chartTheme.value.primary,
-      backgroundColor: chartTheme.value.fill,
-      pointBackgroundColor: chartTheme.value.surface,
-      pointBorderColor: chartTheme.value.primary,
-      pointBorderWidth: 2,
-      pointHoverRadius: 5,
-      pointRadius: 3,
-      tension: 0.38,
-      fill: true,
-    },
-  ],
+import type { ApexOptions } from 'apexcharts'
+import { defineAsyncComponent } from 'vue'
+const ApexChart=defineAsyncComponent(()=>import('vue3-apexcharts').then(m=>m.default))
+const props=defineProps<{labels:string[];values:number[];color?:string}>()
+const theme=useThemeStore()
+const options=computed<ApexOptions>(()=>({
+  chart:{type:'area',toolbar:{show:false},fontFamily:'Manrope, system-ui, sans-serif',background:'transparent',foreColor:theme.isDark?'#cbd5e1':'#64748b',animations:{enabled:false}},
+  theme:{mode:theme.isDark?'dark':'light'},
+  colors:[props.color||(theme.isDark?'#93b5e5':'#304f7e')],
+  dataLabels:{enabled:false},legend:{show:false,position:'bottom',fontSize:'12px'},
+  xaxis:{categories:props.labels,axisBorder:{show:false},axisTicks:{show:false}},yaxis:{min:0,decimalsInFloat:0},grid:{borderColor:theme.isDark?'#334155':'#e2e8f0',strokeDashArray:3},stroke:{curve:'smooth',width:3},fill:{type:'gradient',gradient:{opacityFrom:.24,opacityTo:.03}},
+  tooltip:{theme:theme.isDark?'dark':'light'}
 }))
-
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: { intersect: false, mode: 'index' as const },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      backgroundColor: chartTheme.value.tooltip,
-      titleColor: chartTheme.value.tooltipTitle,
-      bodyColor: chartTheme.value.tooltipBody,
-      borderColor: chartTheme.value.border,
-      borderWidth: 1,
-      padding: 12,
-      displayColors: false,
-    },
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      border: { display: false },
-      ticks: { color: chartTheme.value.muted, font: { family: 'Manrope', size: 10 } },
-    },
-    y: {
-      beginAtZero: true,
-      border: { display: false },
-      grid: { color: chartTheme.value.grid },
-      ticks: { precision: 0, color: chartTheme.value.muted, font: { family: 'Manrope', size: 10 } },
-    },
-  },
-}))
+const series=computed(()=>[{name:'Solicitações criadas',data:props.values}])
 </script>
-
-<template>
-  <div class="chart-canvas"><Line :data="chartData" :options="chartOptions" /></div>
-</template>
-
-<style scoped>
-.chart-canvas { height: 270px; }
-</style>
+<template><div class="central-chart"><ApexChart v-if="values.length" type="area" :height="270" :options="options" :series="series"/><div v-else class="chart-empty">Sem dados</div></div></template>
+<style scoped>.central-chart{min-width:0;min-height:270px}.chart-empty{display:grid;place-items:center;min-height:270px;color:var(--color-text-muted)}</style>
