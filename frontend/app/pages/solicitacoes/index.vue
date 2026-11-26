@@ -22,14 +22,13 @@ const items = ref<RequestListItem[]>([])
 const total = ref(0)
 const totalPages = ref(1)
 const loading = ref(true)
-const refreshing=ref(false), error=ref(''), lastUpdated=ref(0)
+const refreshing=ref(false), lastUpdated=ref(0)
 const {user}=useAuth()
 let sequence=0, disposed=false
 
 async function load(quiet=false) {
   const current=++sequence
   if(!quiet)loading.value=true;else refreshing.value=true
-  error.value=''
   try {
     const response = await listRequests(filters.value)
     if(disposed||current!==sequence)return

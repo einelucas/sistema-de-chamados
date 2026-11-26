@@ -28,7 +28,7 @@ function close() {
     <div v-if="modelValue" class="mobile-overlay" @click.self="close">
       <aside class="mobile-panel">
         <div class="mobile-brand">
-          <img src="/brand/logo.png" class="nexotiva-logo" alt="Nexotiva" />
+          <img src="~/assets/brand/logo.png" class="nexotiva-logo" alt="Nexotiva" />
           <div><strong>NEXOTIVA</strong><small>CHAMADOS</small></div>
           <button aria-label="Fechar menu" @click="close"><UiIcon name="close" :size="19" /></button>
         </div>

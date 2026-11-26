@@ -32,7 +32,7 @@ async function handleSubmit() {
   <main class="login-page">
     <section class="login-intro">
       <div class="intro-brand">
-        <img src="/brand/logo.png" class="nexotiva-logo" alt="Nexotiva" />
+        <img src="~/assets/brand/logo.png" class="nexotiva-logo" alt="Nexotiva" />
         <div>
           <strong>NEXOTIVA</strong>
           <span>SOLICITAÇÕES</span>

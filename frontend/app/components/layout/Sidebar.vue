@@ -24,7 +24,7 @@ function isActive(path: string) {
 <template>
   <aside class="sidebar">
     <NuxtLink to="/dashboard" class="brand" aria-label="Ir para o dashboard">
-      <img src="/brand/logo.png" class="nexotiva-logo" alt="Nexotiva" />
+      <img src="~/assets/brand/logo.png" class="nexotiva-logo" alt="Nexotiva" />
     </NuxtLink>
 
     <div class="nav-section">
