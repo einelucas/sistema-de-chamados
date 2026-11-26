@@ -1,6 +1,5 @@
 """Server-to-server API; never expose the integration token to a browser."""
 import hashlib
-import json
 import secrets
 from typing import Annotated, Literal
 from uuid import UUID

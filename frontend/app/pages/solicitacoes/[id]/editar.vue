@@ -26,7 +26,7 @@ async function handleSubmit(payload: any) {
   saving.value = true
   try {
     const { priority, ...updatePayload } = payload
-    await updateRequest(requestId, updatePayload)
+    await updateRequest(requestId, {...updatePayload,expected_version:request.value?.version})
     toast.success('Solicitação atualizada com sucesso.')
     await navigateTo(`/solicitacoes/${requestId}`)
   } catch (error) {
