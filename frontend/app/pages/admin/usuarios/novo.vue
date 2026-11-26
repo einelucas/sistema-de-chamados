@@ -46,9 +46,9 @@ async function handleSubmit() {
         <h1>Novo usuário</h1>
         <p>Cadastre um novo acesso e defina o nível de permissão inicial.</p>
       </div>
-      <NuxtLink to="/admin/usuarios" class="btn btn-secondary">
+      <VBtn to="/admin/usuarios" class="hub-action-button" color="secondary" variant="outlined">
         <UiIcon name="arrowRight" :size="17" class="back-icon" /> Voltar aos usuários
-      </NuxtLink>
+      </VBtn>
     </div>
 
     <div class="user-form-layout">
@@ -75,17 +75,13 @@ async function handleSubmit() {
         </div>
         <div class="form-field">
           <label for="role">Papel</label>
-          <select id="role" v-model="role">
-            <option value="USER">Usuário</option>
-            <option value="ANALYST">Analista</option>
-            <option value="ADMIN">Administrador</option>
-          </select>
+          <VSelect id="role" v-model="role" :items="[{title:'Usuário',value:'USER'},{title:'Analista',value:'ANALYST'},{title:'Administrador',value:'ADMIN'}]" hide-details/>
         </div>
 
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit" :disabled="loading">
+          <VBtn class="hub-action-button" color="primary" variant="flat" type="submit" :disabled="loading">
             <UiIcon name="check" :size="17" /> {{ loading ? 'Criando...' : 'Criar usuário' }}
-          </button>
+          </VBtn>
         </div>
       </form>
 

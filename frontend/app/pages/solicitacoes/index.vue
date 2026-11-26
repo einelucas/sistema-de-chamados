@@ -66,7 +66,7 @@ function changePage(page: number) {
         <h1>Solicitações</h1>
         <p>Acompanhe e gerencie as solicitações internas</p>
       </div>
-      <NuxtLink to="/solicitacoes/nova" class="btn btn-primary"><UiIcon name="plus" :size="18" /> Nova solicitação</NuxtLink>
+      <VBtn to="/solicitacoes/nova" class="hub-action-button" color="primary" variant="flat"><UiIcon name="plus" :size="18" /> Nova solicitação</VBtn>
     </div>
 
     <SolicitacoesFiltersBar v-model="filters" @change="load()" />

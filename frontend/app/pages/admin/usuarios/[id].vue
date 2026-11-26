@@ -102,7 +102,7 @@ async function confirmDelete() {
             </div>
           </div>
         </div>
-        <NuxtLink to="/admin/usuarios" class="btn btn-secondary"><UiIcon name="arrowRight" :size="17" class="back-icon" /> Voltar</NuxtLink>
+        <VBtn to="/admin/usuarios" class="hub-action-button" color="secondary" variant="outlined"><UiIcon name="arrowRight" :size="17" class="back-icon" /> Voltar</VBtn>
       </div>
 
       <div class="cards-grid">
@@ -121,16 +121,12 @@ async function confirmDelete() {
           </div>
           <div class="form-field">
             <label for="user-role">Papel</label>
-            <select id="user-role" v-model="role">
-              <option value="USER">Usuário</option>
-              <option value="ANALYST">Analista</option>
-              <option value="ADMIN">Administrador</option>
-            </select>
+            <VSelect id="user-role" v-model="role" :items="[{title:'Usuário',value:'USER'},{title:'Analista',value:'ANALYST'},{title:'Administrador',value:'ADMIN'}]" hide-details/>
           </div>
           <div class="form-actions">
-            <button class="btn btn-primary" :disabled="saving" @click="saveChanges">
+            <VBtn class="hub-action-button" color="primary" variant="flat" :disabled="saving" @click="saveChanges" type="button">
               <UiIcon name="check" :size="17" /> {{ saving ? 'Salvando...' : 'Salvar alterações' }}
-            </button>
+            </VBtn>
           </div>
         </section>
 
@@ -144,9 +140,9 @@ async function confirmDelete() {
               <label for="new-password">Nova senha</label>
               <input id="new-password" v-model="newPassword" type="password" autocomplete="new-password" placeholder="Mínimo de 6 caracteres" />
             </div>
-            <button class="btn btn-secondary" :disabled="resettingPassword" @click="handleResetPassword">
+            <VBtn class="hub-action-button" color="secondary" variant="outlined" :disabled="resettingPassword" @click="handleResetPassword" type="button">
               <UiIcon name="shield" :size="16" /> {{ resettingPassword ? 'Redefinindo...' : 'Redefinir senha' }}
-            </button>
+            </VBtn>
           </section>
 
           <section class="card danger-zone">
@@ -154,7 +150,7 @@ async function confirmDelete() {
               <span><UiIcon name="trash" :size="18" /></span>
               <div><h2>Zona de risco</h2><p>A exclusão é definitiva e pode ser bloqueada pelas regras de integridade.</p></div>
             </div>
-            <button class="btn btn-danger" @click="deleteDialogOpen = true"><UiIcon name="trash" :size="16" /> Excluir usuário</button>
+            <VBtn class="hub-action-button" color="error" variant="flat" @click="deleteDialogOpen = true" type="button"><UiIcon name="trash" :size="16" /> Excluir usuário</VBtn>
           </section>
         </div>
       </div>

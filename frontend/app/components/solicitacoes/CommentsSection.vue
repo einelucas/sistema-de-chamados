@@ -70,10 +70,10 @@ async function remove(comment: Comment) {
     </div>
 
     <form class="new-comment" @submit.prevent="submit">
-      <label v-if="integrated">Visibilidade <select v-model="publicReply"><option :value="false">Nota interna (somente atendimento)</option><option :value="true">Resposta pública ao cliente</option></select></label><textarea v-model="newContent" rows="3" placeholder="Escreva um comentário..." />
-      <button class="btn btn-primary" type="submit" :disabled="submitting || !newContent.trim()">
+      <VSelect v-if="integrated" v-model="publicReply" label="Visibilidade" :items="[{title:'Nota interna (somente atendimento)',value:false},{title:'Resposta pública ao cliente',value:true}]" hide-details/><textarea v-model="newContent" rows="3" placeholder="Escreva um comentário..." />
+      <VBtn class="hub-action-button" color="primary" variant="flat" type="submit" :disabled="submitting || !newContent.trim()">
         <UiIcon name="arrowRight" :size="16" /> {{ submitting ? 'Enviando...' : 'Comentar' }}
-      </button>
+      </VBtn>
     </form>
 
     <div v-if="loading" class="comments-loading"><UiSkeleton v-for="item in 2" :key="item" height="70px" /></div>
@@ -90,8 +90,8 @@ async function remove(comment: Comment) {
           <template v-if="editingId === comment.id">
             <textarea v-model="editingContent" rows="2" />
             <div class="comment-actions">
-              <button class="btn btn-secondary" @click="editingId = null">Cancelar</button>
-              <button class="btn btn-primary" @click="saveEdit(comment)">Salvar</button>
+              <VBtn class="hub-action-button" color="secondary" variant="outlined" @click="editingId = null" type="button">Cancelar</VBtn>
+              <VBtn class="hub-action-button" color="primary" variant="flat" @click="saveEdit(comment)" type="button">Salvar</VBtn>
             </div>
           </template>
           <template v-else>

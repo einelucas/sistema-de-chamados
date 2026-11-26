@@ -139,12 +139,12 @@ async function confirmDelete() {
           </div>
         </div>
         <div class="detail-actions">
-          <NuxtLink v-if="canEdit" :to="`/solicitacoes/${request.id}/editar`" class="btn btn-secondary">
+          <VBtn v-if="canEdit" :to="`/solicitacoes/${request.id}/editar`" class="hub-action-button" color="secondary" variant="outlined">
             <UiIcon name="edit" :size="16" /> Editar
-          </NuxtLink>
-          <button v-if="canDelete" class="btn btn-danger" @click="deleteDialogOpen = true">
+          </VBtn>
+          <VBtn v-if="canDelete" class="hub-action-button" color="error" variant="flat" @click="deleteDialogOpen = true" type="button">
             <UiIcon name="trash" :size="16" /> Excluir
-          </button>
+          </VBtn>
         </div>
       </div>
 

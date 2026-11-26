@@ -19,133 +19,21 @@ const modules=computed(()=>Array.from(new Map(contexts.value.filter(c=>!props.mo
 onMounted(async()=>{if(isAnalystOrAdmin.value){try{contexts.value=await $api<Context[]>('/requests/contexts')}catch{}}})
 function company(value:string){emit('update:modelValue',{...props.modelValue,company_id:value,module_slug:'',origin:value?'nexotiva':'',page:1});emit('change')}
 let searchTimeout: ReturnType<typeof setTimeout>
-function onSearchInput(event: Event) {
-  const value = (event.target as HTMLInputElement).value
+function onSearchInput(value: string | null) {
   clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => update('search', value), 350)
+  searchTimeout = setTimeout(() => update('search', value ?? ''), 350)
 }
 onBeforeUnmount(()=>clearTimeout(searchTimeout))
+function sort(value:string){const [sort_by,order]=value.split(':');emit('update:modelValue',{...props.modelValue,sort_by,sort_order:order==='asc'?'asc':'desc',page:1});emit('change')}
 </script>
 
 <template>
-  <div class="filters-bar card">
-    <div class="search-wrap">
-      <UiIcon name="search" :size="18" />
-      <input
-        class="search-input"
-        type="search"
-        placeholder="Pesquisar por título ou descrição..."
-        :value="modelValue.search"
-        @input="onSearchInput"
-      >
-    </div>
-
-    <label v-if="isAnalystOrAdmin" class="filter-control"><span>Empresa</span><select :value="modelValue.company_id||''" @change="company(($event.target as HTMLSelectElement).value)"><option value="">Todas</option><option v-for="[id,name] in companies" :key="id" :value="id">{{name}}</option></select></label>
-    <label v-if="isAnalystOrAdmin" class="filter-control"><span>Módulo</span><select :value="modelValue.module_slug||''" @change="update('module_slug',($event.target as HTMLSelectElement).value)"><option value="">Todos</option><option v-for="[id,name] in modules" :key="id" :value="id">{{name}}</option></select></label>
-    <label class="filter-control">
-      <span>Status</span>
-      <select :value="modelValue.status" @change="update('status', ($event.target as HTMLSelectElement).value as any)">
-        <option value="">Todos</option>
-        <option v-for="(label, key) in STATUS_LABELS" :key="key" :value="key">{{ label }}</option>
-      </select>
-    </label>
-
-    <label class="filter-control">
-      <span>Prioridade</span>
-      <select :value="modelValue.priority" @change="update('priority', ($event.target as HTMLSelectElement).value as any)">
-        <option value="">Todas</option>
-        <option v-for="(label, key) in PRIORITY_LABELS" :key="key" :value="key">{{ label }}</option>
-      </select>
-    </label>
-
-    <label class="filter-control">
-      <span>Categoria</span>
-      <select :value="modelValue.category" @change="update('category', ($event.target as HTMLSelectElement).value as any)">
-        <option value="">Todas</option>
-        <option v-for="(label, key) in CATEGORY_LABELS" :key="key" :value="key">{{ label }}</option>
-      </select>
-    </label>
-
-    <label class="filter-control">
-      <span>Ordenação</span>
-      <select
-        :value="`${modelValue.sort_by}:${modelValue.sort_order}`"
-        @change="
-          (() => {
-            const [sortBy, sortOrder] = ($event.target as HTMLSelectElement).value.split(':')
-            emit('update:modelValue', { ...modelValue, sort_by: sortBy, sort_order: sortOrder as any })
-            emit('change')
-          })()
-        "
-      >
-        <option value="created_at:desc">Mais recentes</option>
-        <option value="created_at:asc">Mais antigas</option>
-        <option value="priority:desc">Maior prioridade</option>
-        <option value="status:asc">Status</option>
-        <option value="due_date:asc">Prazo</option>
-      </select>
-    </label>
-  </div>
-</template>
-
-<style scoped>
-.filters-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
-  gap: 12px;
-  padding: 15px;
-  margin-bottom: 16px;
-}
-.search-wrap {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-}
-.search-wrap > svg {
-  position: absolute;
-  left: 14px;
-  bottom: 13px;
-  color: var(--placeholder);
-  pointer-events: none;
-}
-.search-input {
-  min-height: 44px;
-  padding-left: 43px;
-}
-.search-wrap:focus-within > svg { color: var(--color-primary); }
-.filter-control {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.filter-control > span {
-  color: var(--color-text-muted);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.filter-control select {
-  min-height: 44px;
-  padding: 10px 12px;
-  color: var(--color-text-soft);
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  font-size: 0.75rem;
-}
-.filter-control select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
-
-@media (max-width: 1180px) {
-  .filters-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .search-wrap { grid-column: 1 / -1; }
-}
-@media (max-width: 620px) {
-  .filters-bar { grid-template-columns: 1fr; }
-  .search-wrap { grid-column: auto; }
-}
-</style>
+<div class="filters-bar card">
+<VTextField label="Pesquisar" placeholder="Título ou descrição" :model-value="modelValue.search||''" @update:model-value="onSearchInput" hide-details clearable class="filter-search"><template #prepend-inner><UiIcon name="search" :size="18"/></template></VTextField>
+<VAutocomplete v-if="isAnalystOrAdmin" label="Empresa" :items="[{title:'Todas',value:''},...companies.map(([value,title])=>({value,title}))]" :model-value="modelValue.company_id||''" @update:model-value="company($event??'')" :menu-props="{contentClass:'hub-searchable-select-menu'}" hide-details/>
+<VAutocomplete v-if="isAnalystOrAdmin" label="Módulo" :items="[{title:'Todos',value:''},...modules.map(([value,title])=>({value,title}))]" :model-value="modelValue.module_slug||''" @update:model-value="update('module_slug',$event??'')" :menu-props="{contentClass:'hub-searchable-select-menu'}" hide-details/>
+<VSelect label="Status" :items="[{title:'Todos',value:''},...Object.entries(STATUS_LABELS).map(([value,title])=>({value,title}))]" :model-value="modelValue.status||''" @update:model-value="update('status',$event as RequestFilters['status'])" hide-details/>
+<VSelect label="Prioridade" :items="[{title:'Todas',value:''},...Object.entries(PRIORITY_LABELS).map(([value,title])=>({value,title}))]" :model-value="modelValue.priority||''" @update:model-value="update('priority',$event as RequestFilters['priority'])" hide-details/>
+<VSelect label="Categoria" :items="[{title:'Todas',value:''},...Object.entries(CATEGORY_LABELS).map(([value,title])=>({value,title}))]" :model-value="modelValue.category||''" @update:model-value="update('category',$event as RequestFilters['category'])" hide-details/>
+<VSelect label="Ordenação" :items="[{title:'Mais recentes',value:'created_at:desc'},{title:'Mais antigas',value:'created_at:asc'},{title:'Maior prioridade',value:'priority:desc'},{title:'Status',value:'status:asc'},{title:'Prazo',value:'due_date:asc'}]" :model-value="`${modelValue.sort_by}:${modelValue.sort_order}`" @update:model-value="sort($event)" hide-details/>
+</div></template><style scoped>.filters-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:center;gap:12px;padding:16px;margin-bottom:16px}.filter-search{grid-column:span 2}@media(max-width:620px){.filters-bar{grid-template-columns:1fr}.filter-search{grid-column:auto}}</style>

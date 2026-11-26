@@ -54,7 +54,7 @@ async function toggleActive(user: User) {
         <h1>Usuários</h1>
         <p>Gerencie os usuários do sistema</p>
       </div>
-      <NuxtLink to="/admin/usuarios/novo" class="btn btn-primary"><UiIcon name="plus" :size="18" /> Novo usuário</NuxtLink>
+      <VBtn to="/admin/usuarios/novo" class="hub-action-button" color="primary" variant="flat"><UiIcon name="plus" :size="18" /> Novo usuário</VBtn>
     </div>
 
     <div class="card users-card">
@@ -92,9 +92,9 @@ async function toggleActive(user: User) {
               </td>
               <td>{{ formatDateOnly(user.created_at) }}</td>
               <td>
-                <button class="btn btn-ghost" :disabled="togglingId === user.id" @click="toggleActive(user)">
+                <VBtn class="hub-action-button" color="secondary" variant="text" :disabled="togglingId === user.id" @click="toggleActive(user)" type="button">
                   <UiIcon :name="user.is_active ? 'close' : 'check'" :size="14" /> {{ togglingId === user.id ? 'Aguarde...' : user.is_active ? 'Desativar' : 'Ativar' }}
-                </button>
+                </VBtn>
               </td>
             </tr>
           </tbody>

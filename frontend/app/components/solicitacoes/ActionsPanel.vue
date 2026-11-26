@@ -12,16 +12,6 @@ const emit = defineEmits<{
 
 const { isAnalystOrAdmin } = useAuth()
 
-function onStatusChange(event: Event) {
-  emit('change-status', (event.target as HTMLSelectElement).value as RequestStatus)
-}
-function onPriorityChange(event: Event) {
-  emit('change-priority', (event.target as HTMLSelectElement).value as RequestPriority)
-}
-function onAssigneeChange(event: Event) {
-  const value = (event.target as HTMLSelectElement).value
-  emit('change-assignee', value ? Number(value) : null)
-}
 </script>
 
 <template>
@@ -31,29 +21,11 @@ function onAssigneeChange(event: Event) {
       <div><h3>Gerenciar solicitação</h3><p>Atualize o andamento e a responsabilidade.</p></div>
     </div>
 
-    <div class="form-field">
-      <label>Status</label>
-      <select :value="request.status" :disabled="!isAnalystOrAdmin" @change="onStatusChange">
-        <option v-for="(label, key) in STATUS_LABELS" :key="key" :value="key">{{ label }}</option>
-      </select>
-    </div>
+    <VSelect label="Status" :items="Object.entries(STATUS_LABELS).map(([value,title])=>({value,title}))" :model-value="request.status" :disabled="!isAnalystOrAdmin" @update:model-value="emit('change-status',$event as RequestStatus)" class="mb-4"/>
 
-    <div class="form-field">
-      <label>Prioridade</label>
-      <select :value="request.priority" :disabled="!isAnalystOrAdmin" @change="onPriorityChange">
-        <option v-for="(label, key) in PRIORITY_LABELS" :key="key" :value="key">{{ label }}</option>
-      </select>
-    </div>
+    <VSelect label="Prioridade" :items="Object.entries(PRIORITY_LABELS).map(([value,title])=>({value,title}))" :model-value="request.priority" :disabled="!isAnalystOrAdmin" @update:model-value="emit('change-priority',$event as RequestPriority)" class="mb-4"/>
 
-    <div class="form-field">
-      <label>Responsável</label>
-      <select :value="request.assignee?.id || ''" :disabled="!isAnalystOrAdmin" @change="onAssigneeChange">
-        <option value="">Não atribuído</option>
-        <option v-for="assignable in assignableUsers" :key="assignable.id" :value="assignable.id">
-          {{ assignable.name }}
-        </option>
-      </select>
-    </div>
+    <VAutocomplete label="Responsável" :items="[{title:'Não atribuído',value:0},...assignableUsers.map(u=>({title:u.name,value:u.id}))]" :model-value="request.assignee?.id??0" :disabled="!isAnalystOrAdmin" @update:model-value="emit('change-assignee',$event||null)" :menu-props="{contentClass:'hub-searchable-select-menu'}" class="mb-4"/>
 
     <p v-if="!isAnalystOrAdmin" class="hint">
       <UiIcon name="shield" :size="15" /> Apenas analistas e administradores podem alterar estes campos.
