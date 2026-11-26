@@ -37,16 +37,16 @@ export function useRequests() {
     return $api<MessageResponse>(`/requests/${id}`, { method: 'DELETE' })
   }
 
-  function changeStatus(id: number, status: RequestStatus) {
-    return $api<RequestItem>(`/requests/${id}/status`, { method: 'PATCH', body: { status } })
+  function changeStatus(id: number, status: RequestStatus, expected_version?:number) {
+    return $api<RequestItem>(`/requests/${id}/status`, { method: 'PATCH', body: { status, expected_version } })
   }
 
-  function changePriority(id: number, priority: RequestPriority) {
-    return $api<RequestItem>(`/requests/${id}/priority`, { method: 'PATCH', body: { priority } })
+  function changePriority(id: number, priority: RequestPriority, expected_version?:number) {
+    return $api<RequestItem>(`/requests/${id}/priority`, { method: 'PATCH', body: { priority, expected_version } })
   }
 
-  function changeAssignee(id: number, assignee_id: number | null) {
-    return $api<RequestItem>(`/requests/${id}/assignee`, { method: 'PATCH', body: { assignee_id } })
+  function changeAssignee(id: number, assignee_id: number | null, expected_version?:number) {
+    return $api<RequestItem>(`/requests/${id}/assignee`, { method: 'PATCH', body: { assignee_id, expected_version } })
   }
 
   return {

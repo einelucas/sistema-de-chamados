@@ -9,8 +9,8 @@ export function useComments() {
     return $api<Comment[]>(`/requests/${requestId}/comments`)
   }
 
-  function createComment(requestId: number, content: string) {
-    return $api<Comment>(`/requests/${requestId}/comments`, { method: 'POST', body: { content } })
+  function createComment(requestId: number, content: string, public_reply = false) {
+    return $api<Comment>(`/requests/${requestId}/comments`, { method: 'POST', body: { content, public_reply } })
   }
 
   function updateComment(commentId: number, content: string) {

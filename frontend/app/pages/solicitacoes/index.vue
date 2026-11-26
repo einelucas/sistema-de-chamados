@@ -22,22 +22,35 @@ const items = ref<RequestListItem[]>([])
 const total = ref(0)
 const totalPages = ref(1)
 const loading = ref(true)
+const refreshing=ref(false), error=ref(''), lastUpdated=ref(0)
+const {user}=useAuth()
+let sequence=0, disposed=false
 
-async function load() {
-  loading.value = true
+async function load(quiet=false) {
+  const current=++sequence
+  if(!quiet)loading.value=true;else refreshing.value=true
+  error.value=''
   try {
     const response = await listRequests(filters.value)
+    if(disposed||current!==sequence)return
     items.value = response.items
+    lastUpdated.value=Date.now()
     total.value = response.total
     totalPages.value = response.total_pages
   } catch (error) {
-    toast.error(extractErrorMessage(error, 'Não foi possível carregar as solicitações.'))
+    if(!disposed&&current===sequence){if([401,403].includes((error as any)?.statusCode)){items.value=[];total.value=0};if(!quiet)toast.error(extractErrorMessage(error,'Não foi possível carregar as solicitações.'))}
   } finally {
-    loading.value = false
+    if(current===sequence){loading.value=false;refreshing.value=false}
   }
 }
 
-onMounted(load)
+onMounted(()=>{
+  try{const saved=JSON.parse(localStorage.getItem('central:filters:'+user.value?.id)||'null');if(saved&&typeof saved==='object')filters.value={...filters.value,status:saved.status||'',priority:saved.priority||'',category:saved.category||'',company_id:typeof saved.company_id==='string'?saved.company_id:'',module_slug:typeof saved.module_slug==='string'?saved.module_slug:'',page:1}}catch{}
+  void load()
+})
+watch(filters,value=>{if(user.value)try{const {status,priority,category,company_id,module_slug}=value;localStorage.setItem('central:filters:'+user.value.id,JSON.stringify({status,priority,category,company_id,module_slug}))}catch{}},{deep:true})
+useSilentRefresh(async()=>{if(!loading.value&&!refreshing.value)await load(true)})
+onBeforeUnmount(()=>{disposed=true;sequence++})
 
 function changePage(page: number) {
   filters.value = { ...filters.value, page }
@@ -57,12 +70,12 @@ function changePage(page: number) {
       <NuxtLink to="/solicitacoes/nova" class="btn btn-primary"><UiIcon name="plus" :size="18" /> Nova solicitação</NuxtLink>
     </div>
 
-    <SolicitacoesFiltersBar v-model="filters" @change="load" />
+    <SolicitacoesFiltersBar v-model="filters" @change="load()" />
 
     <div class="card requests-card">
       <div class="list-heading">
         <div><span><UiIcon name="requests" :size="18" /></span><div><h2>Fila de solicitações</h2><p>{{ total }} registro(s) encontrado(s)</p></div></div>
-        <span class="live-dot"><i /> Atualizado</span>
+        <span class="live-dot" role="status"><i /> {{ refreshing ? "Atualizando..." : lastUpdated ? "Atualizado às "+new Date(lastUpdated).toLocaleTimeString("pt-BR") : "Aguardando atualização" }}</span>
       </div>
       <div v-if="loading" style="padding: 20px; display: flex; flex-direction: column; gap: 10px">
         <UiSkeleton v-for="i in 5" :key="i" height="40px" />

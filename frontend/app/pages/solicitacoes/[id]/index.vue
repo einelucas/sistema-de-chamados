@@ -16,18 +16,22 @@ const toast = useToast()
 
 const request = ref<RequestItem | null>(null)
 const loading = ref(true)
+const busy=ref(false)
+let generation=0,disposed=false
 const assignableUsers = ref<User[]>([])
 const deleteDialogOpen = ref(false)
 const deleting = ref(false)
 
-async function load() {
-  loading.value = true
+async function load(quiet=false) {
+  const seq=++generation
+  if(!quiet)loading.value=true
   try {
-    request.value = await getRequest(requestId)
+    const result=await getRequest(requestId)
+    if(!disposed&&seq===generation)request.value=result
   } catch (error) {
-    toast.error(extractErrorMessage(error, 'Não foi possível carregar a solicitação.'))
+    if(!disposed&&seq===generation){if([401,403,404].includes((error as any)?.statusCode))request.value=null;if(!quiet)toast.error(extractErrorMessage(error,'Não foi possível carregar a solicitação.'))}
   } finally {
-    loading.value = false
+    if(seq===generation)loading.value=false
   }
 }
 
@@ -43,6 +47,8 @@ onMounted(async () => {
   }
 })
 
+useSilentRefresh(async()=>{if(!busy.value&&!loading.value&&!deleting.value&&!deleteDialogOpen.value)await load(true)})
+onBeforeUnmount(()=>{disposed=true;generation++})
 const canEdit = computed(() => {
   if (!request.value || !user.value) return false
   if (isAdmin.value) return true
@@ -51,40 +57,43 @@ const canEdit = computed(() => {
 
 const canDelete = computed(() => {
   if (!request.value || !user.value) return false
-  return isAdmin.value || request.value.requester.id === user.value.id
+  return !request.value.nexotiva && (isAdmin.value || request.value.requester.id === user.value.id)
 })
 
 async function handleStatusChange(status: RequestStatus) {
-  if (!request.value) return
+  if (!request.value || busy.value) return
+  busy.value=true;generation++
   try {
-    request.value = await changeStatus(request.value.id, status)
+    request.value = await changeStatus(request.value.id, status, request.value.version)
     toast.success('Status atualizado.')
   } catch (error) {
     toast.error(extractErrorMessage(error))
-    await load()
-  }
+    await load(true)
+  } finally {busy.value=false}
 }
 
 async function handlePriorityChange(priority: RequestPriority) {
-  if (!request.value) return
+  if (!request.value || busy.value) return
+  busy.value=true;generation++
   try {
-    request.value = await changePriority(request.value.id, priority)
+    request.value = await changePriority(request.value.id, priority, request.value.version)
     toast.success('Prioridade atualizada.')
   } catch (error) {
     toast.error(extractErrorMessage(error))
-    await load()
-  }
+    await load(true)
+  } finally {busy.value=false}
 }
 
 async function handleAssigneeChange(assigneeId: number | null) {
-  if (!request.value) return
+  if (!request.value || busy.value) return
+  busy.value=true;generation++
   try {
-    request.value = await changeAssignee(request.value.id, assigneeId)
+    request.value = await changeAssignee(request.value.id, assigneeId, request.value.version)
     toast.success('Responsável atualizado.')
   } catch (error) {
     toast.error(extractErrorMessage(error))
-    await load()
-  }
+    await load(true)
+  } finally {busy.value=false}
 }
 
 async function confirmDelete() {
@@ -152,10 +161,10 @@ async function confirmDelete() {
               <p class="description">{{ request.description }}</p>
             </div>
 
-            <div class="meta-grid">
+            <div class="meta-grid"><div v-if="request.nexotiva" class="meta-item"><div><span class="meta-label">Empresa / módulo</span><p>{{request.nexotiva.company_name}} · {{request.nexotiva.module_name}}</p><span>{{request.nexotiva.user_email}}</span></div></div>
               <div class="meta-item">
                 <span class="meta-icon"><UiIcon name="user" :size="17" /></span>
-                <div><span class="meta-label">Solicitante</span><p>{{ request.requester.name }}</p></div>
+                <div><span class="meta-label">Solicitante</span><p>{{ request.nexotiva?.user_name || request.requester.name }}</p></div>
               </div>
               <div class="meta-item">
                 <span class="meta-icon"><UiIcon name="users" :size="17" /></span>
@@ -182,7 +191,7 @@ async function confirmDelete() {
           </section>
 
           <section class="card content-card">
-            <SolicitacoesCommentsSection :request-id="request.id" />
+            <SolicitacoesCommentsSection :request-id="request.id" :integrated="!!request.nexotiva" />
           </section>
 
           <section class="card content-card">

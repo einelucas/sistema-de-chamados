@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Comment } from '~/types/comment'
 
-const props = defineProps<{ requestId: number }>()
+const props = defineProps<{ requestId: number; integrated?:boolean }>()
 const { listComments, createComment, updateComment, deleteComment } = useComments()
 const { user, isAdmin } = useAuth()
 const toast = useToast()
@@ -9,31 +9,36 @@ const toast = useToast()
 const comments = ref<Comment[]>([])
 const loading = ref(true)
 const newContent = ref('')
+const publicReply=ref(false)
+let sequence=0,disposed=false
 const submitting = ref(false)
 const editingId = ref<number | null>(null)
 const editingContent = ref('')
 const deletingId = ref<number | null>(null)
 
-async function load() {
-  loading.value = true
-  try { comments.value = await listComments(props.requestId) }
-  catch (error) { toast.error(extractErrorMessage(error, 'Não foi possível carregar os comentários.')) }
-  finally { loading.value = false }
+async function load(quiet=false) {
+  const current=++sequence
+  if(!quiet)loading.value=true
+  try { const next=await listComments(props.requestId);if(!disposed&&current===sequence)comments.value=next }
+  catch (error) { if(!quiet)toast.error(extractErrorMessage(error, 'Não foi possível carregar os comentários.'));if([401,403,404].includes((error as any)?.statusCode))comments.value=[] }
+  finally { if(current===sequence)loading.value=false }
 }
-onMounted(load)
+onMounted(()=>load())
+useSilentRefresh(async()=>{if(!submitting.value&&!editingId.value&&!deletingId.value)await load(true)})
+onBeforeUnmount(()=>{disposed=true;sequence++})
 
 async function submit() {
-  if (!newContent.value.trim()) return
+  if (submitting.value || !newContent.value.trim()) return
   submitting.value = true
   try {
-    comments.value.push(await createComment(props.requestId, newContent.value.trim()))
-    newContent.value = ''
+    comments.value.push(await createComment(props.requestId, newContent.value.trim(), props.integrated && publicReply.value))
+    newContent.value = '';publicReply.value=false
     toast.success('Comentário adicionado.')
   } catch (error) { toast.error(extractErrorMessage(error)) }
   finally { submitting.value = false }
 }
 
-function canManage(comment: Comment) { return isAdmin.value || comment.author.id === user.value?.id }
+function canManage(comment: Comment) { return !comment.author.email.endsWith("@integration.example.com") && (isAdmin.value || comment.author.id === user.value?.id) }
 function startEdit(comment: Comment) { editingId.value = comment.id; editingContent.value = comment.content }
 
 async function saveEdit(comment: Comment) {
@@ -65,7 +70,7 @@ async function remove(comment: Comment) {
     </div>
 
     <form class="new-comment" @submit.prevent="submit">
-      <textarea v-model="newContent" rows="3" placeholder="Escreva um comentário..." />
+      <label v-if="integrated">Visibilidade <select v-model="publicReply"><option :value="false">Nota interna (somente atendimento)</option><option :value="true">Resposta pública ao cliente</option></select></label><textarea v-model="newContent" rows="3" placeholder="Escreva um comentário..." />
       <button class="btn btn-primary" type="submit" :disabled="submitting || !newContent.trim()">
         <UiIcon name="arrowRight" :size="16" /> {{ submitting ? 'Enviando...' : 'Comentar' }}
       </button>
@@ -79,7 +84,7 @@ async function remove(comment: Comment) {
         <span class="comment-avatar">{{ comment.author.name.charAt(0).toUpperCase() }}</span>
         <div class="comment-body">
           <div class="comment-header">
-            <span class="comment-author">{{ comment.author.name }}</span>
+            <span class="comment-author">{{ comment.author.name }} <small v-if="integrated">· {{comment.public_reply?"Público":"Interno"}}</small></span>
             <span class="comment-date">{{ formatDate(comment.created_at) }}</span>
           </div>
           <template v-if="editingId === comment.id">

@@ -3,6 +3,7 @@ import type { User } from './user'
 
 export interface Comment {
   id: number
+  public_reply: boolean
   content: string
   author: User
   request_id: number
