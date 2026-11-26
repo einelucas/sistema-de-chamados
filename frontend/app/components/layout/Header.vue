@@ -3,6 +3,7 @@ const { user, logout } = useAuth()
 const route = useRoute()
 const toast = useToast()
 const themeStore = useThemeStore()
+const syncStatus=useState('central-sync-status',()=> 'idle')
 const mobileMenuOpen = ref(false)
 const userMenuOpen = ref(false)
 
@@ -49,7 +50,7 @@ watch(() => route.path, () => {
       </div>
 
       <div class="header-actions">
-        <span class="environment-chip"><span /> Atendimento Nexotiva</span>
+        <span class="environment-chip" role="status"><span /> {{syncStatus==='connected'?'Sincronizado':syncStatus==='offline'?'Sem conexão':'Atualização periódica'}}</span>
 
         <button
           class="theme-toggle"
