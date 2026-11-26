@@ -2,7 +2,7 @@
 // Seção de anexos: upload, listagem, download e remoção de arquivos vinculados à solicitação.
 import type { Attachment } from '~/types/attachment'
 
-const props = defineProps<{ requestId: number }>()
+const props = defineProps<{ requestId: number; integrated?:boolean }>()
 const { listAttachments, uploadAttachment, deleteAttachment, downloadAttachment } = useAttachments()
 const toast = useToast()
 const { user, isAdmin } = useAuth()
@@ -11,29 +11,32 @@ const attachments = ref<Attachment[]>([])
 const loading = ref(true)
 const uploading = ref(false)
 const deletingId = ref<number | null>(null)
+const share=ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 
-async function load() {
-  loading.value = true
+async function load(quiet=false) {
+  if(!quiet)loading.value=true
   try {
     attachments.value = await listAttachments(props.requestId)
   } catch (error) {
-    toast.error(extractErrorMessage(error, 'Não foi possível carregar os anexos.'))
+    if(!quiet)toast.error(extractErrorMessage(error, 'Não foi possível carregar os anexos.'));if([401,403,404].includes((error as any)?.statusCode))attachments.value=[]
   } finally {
     loading.value = false
   }
 }
 
-onMounted(load)
+onMounted(()=>load())
+useSilentRefresh(async()=>{if(!uploading.value&&!deletingId.value)await load(true)})
 
 async function handleFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
-  if (!file) return
+  if (!file || uploading.value) return
+  if(file.size>3*1024*1024){toast.error('Limite de 3 MB por arquivo.');input.value='';return}
   uploading.value = true
   try {
-    const attachment = await uploadAttachment(props.requestId, file)
-    attachments.value.unshift(attachment)
+    const attachment = await uploadAttachment(props.requestId, file, !!props.integrated && share.value)
+    attachments.value.unshift(attachment);share.value=false
     toast.success('Anexo enviado com sucesso.')
   } catch (error) {
     toast.error(extractErrorMessage(error, 'Não foi possível enviar o arquivo.'))
@@ -65,7 +68,7 @@ function canManage(attachment: Attachment) {
   <div class="attachments-section">
     <div class="attachments-header">
       <div class="section-title"><span><UiIcon name="paperclip" :size="18" /></span><div><h3>Anexos</h3><p>Arquivos relacionados à solicitação</p></div></div>
-      <label class="btn btn-secondary upload-btn">
+      <label v-if="integrated"><input v-model="share" type="checkbox" /> Compartilhar com cliente</label><label class="btn btn-secondary upload-btn">
         <UiIcon name="plus" :size="16" /> {{ uploading ? 'Enviando...' : 'Anexar arquivo' }}
         <input ref="fileInput" type="file" hidden :disabled="uploading" @change="handleFileChange" />
       </label>
@@ -85,7 +88,7 @@ function canManage(attachment: Attachment) {
             <button class="attachment-name" @click="downloadAttachment(attachment.id, attachment.original_filename)">
               {{ attachment.original_filename }}
             </button>
-            <p class="attachment-meta">{{ formatFileSize(attachment.size_bytes) }} · {{ attachment.uploaded_by.name }} · {{ formatDate(attachment.created_at) }}</p>
+            <p class="attachment-meta">{{ formatFileSize(attachment.size_bytes) }} · <template v-if="integrated">{{attachment.shared_with_customer?'Compartilhado':'Interno'}} · </template> {{ attachment.uploaded_by.name }} · {{ formatDate(attachment.created_at) }}</p>
           </div>
         </div>
         <button v-if="canManage(attachment)" class="btn btn-ghost" :disabled="deletingId === attachment.id" @click="remove(attachment)">

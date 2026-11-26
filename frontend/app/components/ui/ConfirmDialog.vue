@@ -15,14 +15,13 @@ const emit = defineEmits<{ 'update:modelValue': [value: boolean]; confirm: [] }>
   <UiModal :model-value="modelValue" :title="title" @update:model-value="emit('update:modelValue', $event)">
     <p style="color: var(--color-text-muted); margin: 0">{{ message }}</p>
     <template #footer>
-      <button class="btn btn-secondary" @click="emit('update:modelValue', false)">Cancelar</button>
-      <button
-        :class="['btn', danger ? 'btn-danger' : 'btn-primary']"
+      <VBtn class="hub-action-button" color="secondary" variant="outlined" @click="emit('update:modelValue', false)" type="button">Cancelar</VBtn>
+      <VBtn class="hub-action-button" :color="danger?'error':'primary'" variant="flat"
         :disabled="loading"
         @click="emit('confirm')"
       >
         {{ loading ? 'Aguarde...' : (confirmLabel || 'Confirmar') }}
-      </button>
+      </VBtn>
     </template>
   </UiModal>
 </template>

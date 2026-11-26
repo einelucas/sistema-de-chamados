@@ -26,7 +26,7 @@ async function handleSubmit(payload: any) {
   saving.value = true
   try {
     const { priority, ...updatePayload } = payload
-    await updateRequest(requestId, updatePayload)
+    await updateRequest(requestId, {...updatePayload,expected_version:request.value?.version})
     toast.success('Solicitação atualizada com sucesso.')
     await navigateTo(`/solicitacoes/${requestId}`)
   } catch (error) {
@@ -53,9 +53,9 @@ async function handleSubmit(payload: any) {
         <h1>Editar solicitação</h1>
         <p>Atualize as informações de contexto sem alterar o histórico do atendimento.</p>
       </div>
-      <NuxtLink :to="`/solicitacoes/${requestId}`" class="btn btn-secondary">
+      <VBtn :to="`/solicitacoes/${requestId}`" class="hub-action-button" color="secondary" variant="outlined">
         <UiIcon name="arrowRight" :size="17" class="back-icon" /> Voltar aos detalhes
-      </NuxtLink>
+      </VBtn>
     </div>
 
     <div v-if="loading" class="card loading-card">

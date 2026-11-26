@@ -18,8 +18,8 @@ class UserRepository:
         return self.db.execute(stmt).scalar_one_or_none()
 
     def list_all(self, skip: int = 0, limit: int = 20) -> tuple[list[User], int]:
-        total = self.db.execute(select(func.count()).select_from(User)).scalar_one()
-        stmt = select(User).order_by(User.created_at.desc()).offset(skip).limit(limit)
+        total = self.db.execute(select(func.count()).select_from(User).where(User.integration_identity.is_(False))).scalar_one()
+        stmt = select(User).where(User.integration_identity.is_(False)).order_by(User.created_at.desc()).offset(skip).limit(limit)
         items = self.db.execute(stmt).scalars().all()
         return list(items), total
 

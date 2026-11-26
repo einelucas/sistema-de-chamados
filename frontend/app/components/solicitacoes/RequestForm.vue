@@ -50,42 +50,21 @@ function handleSubmit() {
       <div><h3>Informações da solicitação</h3><p>Preencha os dados necessários para o atendimento.</p></div>
     </div>
 
-    <div class="form-field">
-      <label for="title">Título *</label>
-      <input id="title" v-model="title" type="text" maxlength="200" placeholder="Ex.: Substituir teclado com defeito">
-      <span v-if="errors.title" class="form-error">{{ errors.title }}</span>
-    </div>
+    <VTextField v-model="title" label="Título *" maxlength="200" :error-messages="errors.title" class="mb-4"/>
 
-    <div class="form-field">
-      <label for="description">Descrição *</label>
-      <textarea id="description" v-model="description" rows="6" placeholder="Descreva detalhadamente sua solicitação..." />
-      <span v-if="errors.description" class="form-error">{{ errors.description }}</span>
-    </div>
+    <VTextarea v-model="description" label="Descrição *" rows="5" :error-messages="errors.description" class="mb-4"/>
 
     <div class="form-row">
-      <div class="form-field">
-        <label for="category">Categoria *</label>
-        <select id="category" v-model="category">
-          <option v-for="(label, key) in CATEGORY_LABELS" :key="key" :value="key">{{ label }}</option>
-        </select>
-      </div>
-      <div v-if="showPriority !== false" class="form-field">
-        <label for="priority">Prioridade</label>
-        <select id="priority" v-model="priority">
-          <option v-for="(label, key) in PRIORITY_LABELS" :key="key" :value="key">{{ label }}</option>
-        </select>
-      </div>
-      <div class="form-field">
-        <label for="due_date">Prazo (opcional)</label>
-        <input id="due_date" v-model="dueDate" type="date">
-      </div>
+      <VSelect v-model="category" label="Categoria *" :items="Object.entries(CATEGORY_LABELS).map(([value,title])=>({value,title}))"/>
+      <VSelect v-if="showPriority !== false" v-model="priority" label="Prioridade" :items="Object.entries(PRIORITY_LABELS).map(([value,title])=>({value,title}))"/>
+      <VTextField v-model="dueDate" label="Prazo (opcional)" type="date"/>
     </div>
 
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit" :disabled="loading">
+      <VBtn class="hub-action-button" color="primary" variant="flat" type="submit" :disabled="loading">
         <UiIcon name="check" :size="17" />
         {{ loading ? 'Salvando...' : (submitLabel || 'Salvar') }}
-      </button>
+      </VBtn>
     </div>
   </form>
 </template>

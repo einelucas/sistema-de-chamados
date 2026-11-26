@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Aclonica&family=Montserrat:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root,
 :root[data-theme='light'] {
@@ -15,16 +15,16 @@
   --color-text-soft: #334155;
   --color-text-muted: #64748b;
 
-  --color-primary: #2563eb;
-  --color-primary-dark: #1d4ed8;
-  --color-primary-deep: #1e40af;
-  --color-primary-light: rgba(37, 99, 235, 0.10);
-  --color-primary-glow: rgba(37, 99, 235, 0.18);
-  --color-primary-border: rgba(37, 99, 235, 0.34);
-  --primary-rgb: 37, 99, 235;
-  --color-accent: #c58a18;
-  --color-accent-light: rgba(197, 138, 24, 0.11);
-  --accent-rgb: 197, 138, 24;
+  --color-primary: #304f7e;
+  --color-primary-dark: #213758;
+  --color-primary-deep: #213758;
+  --color-primary-light: rgba(48, 79, 126, 0.10);
+  --color-primary-glow: rgba(48, 79, 126, 0.18);
+  --color-primary-border: rgba(48, 79, 126, 0.34);
+  --primary-rgb: 48, 79, 126;
+  --color-accent: #eaa239;
+  --color-accent-light: rgba(234, 162, 57, 0.11);
+  --accent-rgb: 234, 162, 57;
 
   --color-success: #16864a;
   --color-success-light: rgba(22, 134, 74, 0.10);
@@ -47,25 +47,25 @@
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
   --shadow-md: 0 18px 42px rgba(15, 23, 42, 0.12);
   --shadow-lg: 0 28px 80px rgba(15, 23, 42, 0.18);
-  --shadow-primary: 0 14px 34px rgba(37, 99, 235, 0.22);
+  --shadow-primary: 0 14px 34px rgba(48, 79, 126, 0.22);
 
-  --body-radial-primary: rgba(37, 99, 235, 0.075);
+  --body-radial-primary: rgba(48, 79, 126, 0.075);
   --body-radial-accent: rgba(14, 165, 233, 0.045);
   --selection-text: #ffffff;
   --card-sheen: rgba(255, 255, 255, 0.75);
   --card-inset: rgba(255, 255, 255, 0.9);
-  --button-primary-start: #3b82f6;
-  --button-primary-end: #1d4ed8;
+  --button-primary-start: #304f7e;
+  --button-primary-end: #213758;
   --button-primary-text: #ffffff;
-  --focus-ring: rgba(37, 99, 235, 0.17);
+  --focus-ring: rgba(48, 79, 126, 0.17);
   --placeholder: #94a3b8;
   --input-hover-border: #94a3b8;
   --input-focus-bg: #ffffff;
   --input-disabled-bg: #eef2f7;
-  --table-header-bg: rgba(37, 99, 235, 0.035);
-  --table-row-hover: rgba(37, 99, 235, 0.045);
-  --table-row-accent: rgba(37, 99, 235, 0.72);
-  --surface-translucent: rgba(37, 99, 235, 0.025);
+  --table-header-bg: rgba(48, 79, 126, 0.035);
+  --table-row-hover: rgba(48, 79, 126, 0.045);
+  --table-row-accent: rgba(48, 79, 126, 0.72);
+  --surface-translucent: rgba(48, 79, 126, 0.025);
   --header-glass: rgba(255, 255, 255, 0.88);
   --modal-overlay: rgba(15, 23, 42, 0.46);
   --mobile-overlay: rgba(15, 23, 42, 0.56);
@@ -73,12 +73,12 @@
   --skeleton-middle: #f8fafc;
   --avatar-text: #ffffff;
   --avatar-end: #60a5fa;
-  --avatar-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
-  --brand-mark-bg: linear-gradient(145deg, rgba(37, 99, 235, 0.16), rgba(37, 99, 235, 0.035));
-  --brand-mark-border: rgba(37, 99, 235, 0.30);
-  --brand-secondary-line: rgba(37, 99, 235, 0.38);
-  --brand-accent-line: rgba(197, 138, 24, 0.82);
-  --brand-accent-glow: rgba(197, 138, 24, 0.38);
+  --avatar-shadow: 0 8px 20px rgba(48, 79, 126, 0.18);
+  --brand-mark-bg: linear-gradient(145deg, rgba(48, 79, 126, 0.16), rgba(48, 79, 126, 0.035));
+  --brand-mark-border: rgba(48, 79, 126, 0.30);
+  --brand-secondary-line: rgba(48, 79, 126, 0.38);
+  --brand-accent-line: rgba(234, 162, 57, 0.82);
+  --brand-accent-glow: rgba(234, 162, 57, 0.38);
   --nav-active-text: #ffffff;
   --nav-active-icon-bg: rgba(255, 255, 255, 0.15);
   --nav-indicator: #ffffff;
@@ -88,7 +88,7 @@
   --transition-fast: 0.16s ease;
   --transition-base: 0.24s ease;
 
-  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 :root[data-theme='dark'] {
@@ -427,9 +427,9 @@ textarea:focus-visible,
   letter-spacing: 0.02em;
 }
 
-.form-field input,
-.form-field select,
-.form-field textarea,
+.form-field input:not(.v-field__input):not(.v-field input):not(.v-field textarea),
+.form-field select:not(.v-field__input):not(.v-field input):not(.v-field textarea),
+.form-field textarea:not(.v-field__input):not(.v-field input):not(.v-field textarea),
 .search-input {
   width: 100%;
   color: var(--color-text);
@@ -444,22 +444,22 @@ textarea:focus-visible,
     box-shadow var(--transition-fast);
 }
 
-.form-field input::placeholder,
-.form-field textarea::placeholder,
+.form-field input:not(.v-field__input):not(.v-field input):not(.v-field textarea)::placeholder,
+.form-field textarea:not(.v-field__input):not(.v-field input):not(.v-field textarea)::placeholder,
 .search-input::placeholder {
   color: var(--placeholder);
 }
 
-.form-field input:hover:not(:disabled),
-.form-field select:hover:not(:disabled),
-.form-field textarea:hover:not(:disabled),
+.form-field input:not(.v-field__input):not(.v-field input):not(.v-field textarea):hover:not(:disabled),
+.form-field select:not(.v-field__input):not(.v-field input):not(.v-field textarea):hover:not(:disabled),
+.form-field textarea:not(.v-field__input):not(.v-field input):not(.v-field textarea):hover:not(:disabled),
 .search-input:hover {
   border-color: var(--input-hover-border);
 }
 
-.form-field input:focus,
-.form-field select:focus,
-.form-field textarea:focus,
+.form-field input:not(.v-field__input):not(.v-field input):not(.v-field textarea):focus,
+.form-field select:not(.v-field__input):not(.v-field input):not(.v-field textarea):focus,
+.form-field textarea:not(.v-field__input):not(.v-field input):not(.v-field textarea):focus,
 .search-input:focus {
   outline: none;
   background: var(--input-focus-bg);
@@ -467,15 +467,15 @@ textarea:focus-visible,
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
-.form-field input:disabled,
-.form-field select:disabled,
-.form-field textarea:disabled {
+.form-field input:not(.v-field__input):not(.v-field input):not(.v-field textarea):disabled,
+.form-field select:not(.v-field__input):not(.v-field input):not(.v-field textarea):disabled,
+.form-field textarea:not(.v-field__input):not(.v-field input):not(.v-field textarea):disabled {
   color: var(--color-text-muted);
   background: var(--input-disabled-bg);
   cursor: not-allowed;
 }
 
-.form-field textarea {
+.form-field textarea:not(.v-field__input):not(.v-field input):not(.v-field textarea) {
   min-height: 118px;
   resize: vertical;
   line-height: 1.55;
@@ -801,3 +801,6 @@ tbody tr:hover {
     transition-duration: 0.01ms !important;
   }
 }
+
+html, body, #__nuxt, button, input, select, textarea {font-family: 'Manrope', system-ui, sans-serif !important;}
+.nexotiva-logo {width:42px;height:42px;object-fit:contain;flex-shrink:0;}

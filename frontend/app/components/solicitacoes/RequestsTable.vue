@@ -11,6 +11,7 @@ defineProps<{ items: RequestListItem[] }>()
       <thead>
         <tr>
           <th>Solicitação</th>
+          <th>Empresa / Módulo</th>
           <th>Categoria</th>
           <th>Prioridade</th>
           <th>Status</th>
@@ -26,10 +27,11 @@ defineProps<{ items: RequestListItem[] }>()
             <span>#{{ item.id }}</span>
             <strong>{{ item.title }}</strong>
           </td>
+          <td><template v-if="item.nexotiva"><strong>{{item.nexotiva.company_name}}</strong><div>{{item.nexotiva.module_name}}</div></template><span v-else>Interno</span></td>
           <td><span class="category-pill">{{ CATEGORY_LABELS[item.category] }}</span></td>
           <td><UiPriorityBadge :priority="item.priority" /></td>
           <td><UiStatusBadge :status="item.status" /></td>
-          <td>{{ item.requester.name }}</td>
+          <td>{{ item.nexotiva?.user_name || item.requester.name }}</td>
           <td>{{ item.assignee?.name || '—' }}</td>
           <td :class="{ overdue: isOverdue(item.due_date, item.status) }">
             {{ item.due_date ? formatDateOnly(item.due_date) : '—' }}

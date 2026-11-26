@@ -3,7 +3,9 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import AppError, ForbiddenError, NotFoundError
+from app.core.exceptions import AppError, ForbiddenError, NotFoundError, ConflictError
+from app.models.user import User
+from app.models.nexotiva_ticket import NexotivaTicket
 from app.models.enums import HistoryAction, RequestStatus, UserRole
 from app.models.request import Request
 from app.models.user import User
@@ -37,6 +39,11 @@ class RequestService:
         self.repo = RequestRepository(db)
         self.history = HistoryService(db)
 
+    @staticmethod
+    def _check_version(request,expected):
+        if expected is not None and request.version!=expected:
+            raise ConflictError("Chamado atualizado por outro usuário. Recarregue antes de editar.")
+
     def _can_view(self, request: Request, user: User) -> bool:
         if user.role in (UserRole.ADMIN, UserRole.ANALYST):
             return True
@@ -60,6 +67,9 @@ class RequestService:
         assignee_id: int | None,
         sort_by: str,
         sort_order: str,
+        company_id: str | None = None,
+        module_slug: str | None = None,
+        origin: str | None = None,
     ):
         filters = RequestFilters(
             search=search,
@@ -68,10 +78,12 @@ class RequestService:
             category=category,  # type: ignore[arg-type]
             requester_id=requester_id,
             assignee_id=assignee_id,
+            company_id=company_id,module_slug=module_slug,origin=origin,
         )
         # Usuario comum so pode ver solicitacoes das quais participa
         if user.role == UserRole.USER:
-            filters.requester_id = requester_id or user.id
+            filters.requester_id = user.id
+            filters.company_id = None; filters.module_slug = None; filters.origin = None
         skip = (page - 1) * page_size
         items, total = self.repo.list_paginated(filters, skip, page_size, sort_by, sort_order)
         if user.role == UserRole.USER:
@@ -103,7 +115,8 @@ class RequestService:
         request = self.get_request(request_id, user)
         if not self._can_edit(request, user):
             raise ForbiddenError("Voce nao tem permissao para editar esta solicitacao")
-        data = payload.model_dump(exclude_unset=True)
+        self._check_version(request,payload.expected_version)
+        data = payload.model_dump(exclude_unset=True,exclude={'expected_version'})
         changed_fields = []
         for field, value in data.items():
             if getattr(request, field) != value:
@@ -120,6 +133,8 @@ class RequestService:
         request = self.get_request(request_id, user)
         if user.role != UserRole.ADMIN and request.requester_id != user.id:
             raise ForbiddenError("Voce nao tem permissao para excluir esta solicitacao")
+        if self.db.get(NexotivaTicket,request.id):
+            raise ConflictError('Chamados da Nexotiva devem ser cancelados, não excluídos')
         self.history.log(request.id, user.id, HistoryAction.EXCLUSAO, previous_value=request.status.value)
         self.repo.soft_delete(request)
 
@@ -127,6 +142,7 @@ class RequestService:
         request = self.get_request(request_id, user)
         if user.role == UserRole.USER:
             raise ForbiddenError("Apenas analistas e administradores podem alterar o status")
+        self._check_version(request,payload.expected_version)
         previous = request.status
         if payload.status != previous and payload.status not in self.ALLOWED_TRANSITIONS.get(previous, set()):
             raise AppError(
@@ -150,6 +166,7 @@ class RequestService:
         request = self.get_request(request_id, user)
         if user.role == UserRole.USER:
             raise ForbiddenError("Apenas analistas e administradores podem alterar a prioridade")
+        self._check_version(request,payload.expected_version)
         previous = request.priority
         request.priority = payload.priority
         request = self.repo.update(request)
@@ -166,6 +183,11 @@ class RequestService:
         request = self.get_request(request_id, user)
         if user.role == UserRole.USER:
             raise ForbiddenError("Apenas analistas e administradores podem atribuir responsavel")
+        if payload.assignee_id is not None:
+            assignee=self.db.get(User,payload.assignee_id)
+            if not assignee or not assignee.is_active or assignee.integration_identity:
+                raise ConflictError('Responsável indisponível')
+        self._check_version(request,payload.expected_version)
         previous = request.assignee_id
         request.assignee_id = payload.assignee_id
         request = self.repo.update(request)

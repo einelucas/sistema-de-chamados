@@ -12,7 +12,7 @@ from app.models.user import User
 from app.repositories.user_repository import UserRepository
 
 
-def get_current_user(
+def get_session_user(
     authorization: str | None = Header(default=None),
     db: Session = Depends(get_db),
 ) -> User:
@@ -27,8 +27,16 @@ def get_current_user(
     user = UserRepository(db).get_by_id(int(payload["sub"]))
     if not user:
         raise UnauthorizedError("Usuario nao encontrado")
-    if not user.is_active:
+    if not user.is_active or user.integration_identity or user.email.lower().endswith('@integration.example.com'):
         raise UnauthorizedError("Usuario inativo")
+    if payload.get('sv',1)!=user.session_version:
+        raise UnauthorizedError('Sessão expirada')
+    return user
+
+
+def get_current_user(user:User=Depends(get_session_user))->User:
+    if user.must_change_password:
+        raise ForbiddenError('Altere sua senha para continuar')
     return user
 
 

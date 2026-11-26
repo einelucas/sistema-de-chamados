@@ -1,0 +1,43 @@
+/*
+ * Nexotiva typography contract.
+ * All native module text inherits the same family, including Vuetify utility
+ * classes and teleported overlays. Keep font sizes, weights and line heights
+ * owned by the component. Do not replace glyph fonts or icon pseudo-elements.
+ */
+html,
+body,
+#__nuxt,
+.v-application,
+.v-overlay-container,
+.v-overlay__content {
+  font-family: var(--font-manrope) !important;
+  --v-font-body: var(--font-manrope);
+  --v-font-family: var(--font-manrope);
+}
+
+/* Include Vuetify/Tailwind text utilities, button content, field labels,
+   selected values, list items, tables, dialogs, tooltips and native inputs.
+   The root specificity deliberately beats library typography defaults. */
+:is(#__nuxt, .v-application, .v-overlay-container, .v-overlay__content)
+  :where(*):not(:where(.v-icon, .v-icon *, .mdi, .mdi *, [class^="mdi-"], [class*=" mdi-"])) {
+  font-family: var(--font-manrope) !important;
+}
+
+/* Native controls do not consistently inherit the family across browsers. */
+:where(button, input, select, textarea, optgroup, option) {
+  font-family: var(--font-manrope);
+}
+
+/* ApexCharts may set explicit SVG presentation attributes and portal tooltips. */
+.apexcharts-canvas,
+.apexcharts-canvas text,
+.apexcharts-canvas tspan,
+.apexcharts-tooltip,
+.apexcharts-tooltip *,
+.apexcharts-xaxistooltip,
+.apexcharts-yaxistooltip,
+.apexcharts-legend-text,
+.apexcharts-menu,
+.apexcharts-menu-item {
+  font-family: var(--font-manrope) !important;
+}

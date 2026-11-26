@@ -1,6 +1,7 @@
 """Rotas de anexos: upload, listagem, download protegido e remocao."""
-from fastapi import APIRouter, Depends, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, Form, UploadFile
+from fastapi.responses import FileResponse, Response
+from urllib.parse import quote
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user
@@ -31,19 +32,25 @@ def list_attachments(request_id: int, current_user: User = Depends(get_current_u
 def upload_attachment(
     request_id: int,
     file: UploadFile,
+    shared_with_customer: bool = Form(False),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     RequestService(db).get_request(request_id, current_user)
-    return AttachmentService(db).upload(request_id, file, current_user)
+    return AttachmentService(db).upload(request_id, file, current_user, shared_with_customer)
 
 
 @router.get("/attachments/{attachment_id}/download", summary="Baixa um anexo (rota protegida)")
 def download_attachment(attachment_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     service = AttachmentService(db)
-    attachment, path = service.get_file_path(attachment_id)
-    # Garante que o usuario tem permissao de visualizar a solicitacao dona do anexo
+    attachment = service.repo.get_by_id(attachment_id)
+    if attachment is None:
+        from app.core.exceptions import NotFoundError
+        raise NotFoundError('Anexo nao encontrado')
     RequestService(db).get_request(attachment.request_id, current_user)
+    attachment, path = service.get_file_path(attachment_id)
+    if path is None:
+        return Response(attachment.file_content, media_type='application/octet-stream', headers={'Content-Disposition':"attachment; filename*=UTF-8''"+quote(attachment.original_filename,safe=''),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'})
     return FileResponse(path=path, filename=attachment.original_filename, media_type=attachment.content_type)
 
 

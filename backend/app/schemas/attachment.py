@@ -14,5 +14,6 @@ class AttachmentOut(BaseModel):
     original_filename: str
     content_type: str
     size_bytes: int
+    shared_with_customer: bool
     uploaded_by: UserOut
     created_at: datetime

@@ -7,7 +7,9 @@ const { getSummary } = useDashboard()
 const toast = useToast()
 const themeStore = useThemeStore()
 
-const { data: summary, pending, error, refresh } = await useAsyncData('dashboard-summary', () => getSummary())
+const {user}=useAuth()
+const { data: summary, pending, error, refresh } = await useAsyncData('dashboard-summary:'+user.value?.id, () => getSummary())
+useSilentRefresh(async()=>{if(!pending.value)await refresh()})
 
 watch(error, (value) => {
   if (value) toast.error(extractErrorMessage(value, 'Não foi possível carregar o dashboard.'))
@@ -111,19 +113,19 @@ const categoryChartColor = computed(() => themeStore.isDark ? '#66a8ff' : '#0284
         <div class="charts-grid">
           <article class="card chart-card chart-card-wide">
             <div class="chart-heading"><div><span>Status</span><h3>Solicitações por status</h3></div><i class="accent-dot primary" /></div>
-            <DashboardBarChart :labels="statusLabels" :values="statusValues" :color="statusChartColor" />
+            <LazyDashboardBarChart :labels="statusLabels" :values="statusValues" :color="statusChartColor" />
           </article>
           <article class="card chart-card">
             <div class="chart-heading"><div><span>Criticidade</span><h3>Solicitações por prioridade</h3></div><i class="accent-dot accent" /></div>
-            <DashboardDoughnutChart :labels="priorityLabels" :values="priorityValues" />
+            <LazyDashboardDoughnutChart :labels="priorityLabels" :values="priorityValues" />
           </article>
           <article class="card chart-card">
             <div class="chart-heading"><div><span>Origem</span><h3>Solicitações por categoria</h3></div><i class="accent-dot info" /></div>
-            <DashboardBarChart :labels="categoryLabels" :values="categoryValues" :color="categoryChartColor" />
+            <LazyDashboardBarChart :labels="categoryLabels" :values="categoryValues" :color="categoryChartColor" />
           </article>
           <article class="card chart-card chart-card-wide">
             <div class="chart-heading"><div><span>Tendência</span><h3>Criadas por período</h3></div><i class="accent-dot primary" /></div>
-            <DashboardLineChart :labels="periodLabels" :values="periodValues" />
+            <LazyDashboardLineChart :labels="periodLabels" :values="periodValues" />
           </article>
         </div>
       </section>

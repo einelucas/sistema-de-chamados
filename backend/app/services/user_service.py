@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.core.security import hash_password
+from app.core.integration import reject_integration_user
 from app.models.enums import UserRole
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -33,6 +34,8 @@ class UserService:
         return user
 
     def create_user(self, payload: UserCreate) -> User:
+        if payload.email.lower().endswith('@integration.example.com'):
+            raise ForbiddenError('Domínio reservado à integração.')
         if self.repo.get_by_email(payload.email):
             raise ConflictError("Ja existe um usuario com este e-mail")
         user = User(
@@ -55,8 +58,11 @@ class UserService:
 
     def update_user(self, user_id: int, payload: UserUpdate, acting_user: User) -> User:
         user = self.get_user(user_id)
+        reject_integration_user(user)
         data = payload.model_dump(exclude_unset=True)
 
+        if "email" in data and data["email"].lower().endswith("@integration.example.com"):
+            raise ForbiddenError("Domínio reservado à integração.")
         if "email" in data and data["email"] != user.email:
             if self.repo.get_by_email(data["email"]):
                 raise ConflictError("Ja existe um usuario com este e-mail")
@@ -87,11 +93,15 @@ class UserService:
 
     def reset_password(self, user_id: int, payload: UserPasswordReset) -> User:
         user = self.get_user(user_id)
+        reject_integration_user(user)
         user.hashed_password = hash_password(payload.new_password)
+        user.must_change_password=True
+        user.session_version+=1
         return self.repo.update(user)
 
     def set_active(self, user_id: int, is_active: bool, acting_user: User) -> User:
         user = self.get_user(user_id)
+        reject_integration_user(user)
         if not is_active:
             if user.id == acting_user.id:
                 raise ForbiddenError("Voce nao pode desativar a propria conta.")
@@ -101,6 +111,7 @@ class UserService:
 
     def delete_user(self, user_id: int, acting_user: User) -> None:
         user = self.get_user(user_id)
+        reject_integration_user(user)
         if user.id == acting_user.id:
             raise ForbiddenError("Voce nao pode excluir a propria conta.")
         self._ensure_not_last_admin(user, acting_user, "excluir este usuario")
