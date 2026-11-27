@@ -26,7 +26,7 @@ function isActive(path: string) {
 <template>
   <aside class="sidebar" :class="{ 'sidebar--mobile': props.mobile }" aria-label="Menu lateral">
     <div class="brand">
-      <NuxtLink to="/dashboard" class="brand-link" aria-label="Nexotiva — ir para o dashboard" @click="props.mobile && emit('close')">
+      <NuxtLink to="/dashboard" class="brand-link" aria-label="Nexotiva — ir para o dashboard" @click="props.mobile && route.path === '/dashboard' && emit('close')">
         <img src="/brand/sidebar-logo.png" class="sidebar-logo" width="150" height="113" alt="Nexotiva" />
       </NuxtLink>
       <button type="button" class="sidebar-close" aria-label="Fechar menu lateral" title="Fechar menu lateral" @click="emit('close')">
@@ -44,7 +44,7 @@ function isActive(path: string) {
           class="nav-link"
           :class="{ active: isActive(link.to) }"
           :aria-current="isActive(link.to) ? 'page' : undefined"
-          @click="props.mobile && emit('close')"
+          @click="props.mobile && route.path === link.to && emit('close')"
         >
           <span class="nav-icon"><UiIcon :name="link.icon" :size="19" /></span>
           <span>{{ link.label }}</span>

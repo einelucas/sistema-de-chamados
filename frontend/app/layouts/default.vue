@@ -10,9 +10,12 @@ function toggleMenu() {
   if (isMobile.value) mobileOpen.value = !mobileOpen.value
   else desktopOpen.value = !desktopOpen.value
 }
+function restoreMenuFocus() {
+  if (import.meta.client) nextTick(() => document.getElementById('central-menu-toggle')?.focus())
+}
 function closeDesktop() {
   desktopOpen.value = false
-  nextTick(() => document.getElementById('central-menu-toggle')?.focus())
+  restoreMenuFocus()
 }
 watch(isMobile, () => { mobileOpen.value = false })
 watch(() => route.path, () => { mobileOpen.value = false })
@@ -29,7 +32,7 @@ watch(() => route.path, () => { mobileOpen.value = false })
         <div class="container"><slot /></div>
       </main>
     </div>
-    <VDialog v-if="isMobile" v-model="mobileOpen" content-class="central-mobile-sidebar-dialog" transition="slide-x-transition" :width="318" :max-width="'88vw'" :scrollable="true" aria-label="Menu de navegação" @after-leave="() => document.getElementById('central-menu-toggle')?.focus()">
+    <VDialog v-if="isMobile" v-model="mobileOpen" content-class="central-mobile-sidebar-dialog" transition="slide-x-transition" :width="318" :max-width="'88vw'" :scrollable="true" aria-label="Menu de navegação" @after-leave="restoreMenuFocus">
       <LayoutSidebar id="central-mobile-sidebar" mobile @close="mobileOpen = false" />
     </VDialog>
     <UiToastContainer />
