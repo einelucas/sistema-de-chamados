@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const props = withDefaults(defineProps<{ mobile?: boolean }>(), { mobile: false })
+const emit = defineEmits<{ close: [] }>()
 const { isAdmin } = useAuth()
 const route = useRoute()
 
@@ -22,20 +24,27 @@ function isActive(path: string) {
 </script>
 
 <template>
-  <aside class="sidebar">
-    <NuxtLink to="/dashboard" class="brand" aria-label="Ir para o dashboard">
-      <img src="~/assets/brand/logo.png" class="nexotiva-logo" alt="Nexotiva" />
-    </NuxtLink>
+  <aside class="sidebar" :class="{ 'sidebar--mobile': props.mobile }" aria-label="Menu lateral">
+    <div class="brand">
+      <NuxtLink to="/dashboard" class="brand-link" aria-label="Nexotiva — ir para o dashboard" @click="props.mobile && emit('close')">
+        <img src="/brand/sidebar-logo.png" class="sidebar-logo" width="150" height="113" alt="Nexotiva" />
+      </NuxtLink>
+      <button type="button" class="sidebar-close" aria-label="Fechar menu lateral" title="Fechar menu lateral" @click="emit('close')">
+        <UiIcon :name="props.mobile ? 'close' : 'panelLeftClose'" :size="20" />
+      </button>
+    </div>
 
     <div class="nav-section">
       <p class="nav-label">Navegação</p>
-      <nav class="nav">
+      <nav class="nav" aria-label="Navegação principal">
         <NuxtLink
           v-for="link in links"
           :key="link.to"
           :to="link.to"
           class="nav-link"
           :class="{ active: isActive(link.to) }"
+          :aria-current="isActive(link.to) ? 'page' : undefined"
+          @click="props.mobile && emit('close')"
         >
           <span class="nav-icon"><UiIcon :name="link.icon" :size="19" /></span>
           <span>{{ link.label }}</span>
@@ -65,7 +74,7 @@ function isActive(path: string) {
   width: var(--sidebar-width);
   display: flex;
   flex-direction: column;
-  padding: 24px 18px 18px;
+  padding: 18px 18px 18px;
   overflow-y: auto;
   background:
     linear-gradient(180deg, rgba(var(--primary-rgb), 0.045), transparent 24%),
@@ -73,69 +82,23 @@ function isActive(path: string) {
   border-right: 1px solid var(--color-border);
 }
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  min-height: 64px;
-  padding: 0 9px 22px;
+  display: flex; align-items: center; gap: 10px;
+  min-height: 86px; padding: 0 4px 16px;
   border-bottom: 1px solid var(--color-border);
-  color: var(--color-text);
-  text-decoration: none;
 }
-.brand-mark {
-  position: relative;
-  width: 42px;
-  height: 42px;
-  flex-shrink: 0;
-  overflow: hidden;
-  border: 1px solid var(--brand-mark-border);
-  border-radius: 13px;
-  background: var(--brand-mark-bg);
-  box-shadow: var(--avatar-shadow), inset 0 1px 0 var(--card-inset);
+.brand-link { flex: 1; display: flex; align-items: center; justify-content: center; min-width: 0; }
+.sidebar-logo { display: block; width: 106px; height: 80px; object-fit: contain; }
+.sidebar-close {
+  flex: 0 0 36px; width: 36px; height: 36px; display:grid; place-items:center;
+  color:var(--color-text-muted); background:transparent; border:1px solid var(--color-border);
+  border-radius:9px; cursor:pointer;
 }
-.brand-mark-line {
-  position: absolute;
-  width: 22px;
-  height: 4px;
-  left: 9px;
-  top: 20px;
-  border-radius: 999px;
-  background: var(--color-primary);
-  transform: rotate(-38deg);
-  box-shadow: 0 -8px 0 var(--brand-secondary-line), 0 8px 0 var(--brand-accent-line);
-}
-.brand-mark-dot {
-  position: absolute;
-  right: 7px;
-  top: 7px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  box-shadow: 0 0 12px var(--brand-accent-glow);
-}
-.brand-copy {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.05;
-}
-.brand-copy strong {
-  color: var(--color-primary);
-  font-family: 'Manrope', sans-serif;
-  font-size: 0.98rem;
-  font-weight: 400;
-  letter-spacing: 0.06em;
-}
-.brand-copy span {
-  margin-top: 5px;
-  color: var(--color-text-soft);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.17em;
-}
+.sidebar-close:hover { color:var(--color-primary); background:var(--color-surface-soft); }
+.sidebar-close:focus-visible,.brand-link:focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
+.sidebar--mobile { position:relative; inset:auto; width:100%; height:100%; min-height:0; padding:20px 16px 18px; }
 .nav-section {
   flex: 1;
-  padding-top: 26px;
+  padding-top: 20px;
 }
 .nav-label {
   margin: 0 12px 10px;
@@ -241,6 +204,6 @@ function isActive(path: string) {
 }
 
 @media (max-width: 900px) {
-  .sidebar { display: none; }
+  .sidebar:not(.sidebar--mobile) { display: none; }
 }
 </style>

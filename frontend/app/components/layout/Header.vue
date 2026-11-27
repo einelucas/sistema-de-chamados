@@ -4,7 +4,8 @@ const route = useRoute()
 const toast = useToast()
 const themeStore = useThemeStore()
 const syncStatus=useState('central-sync-status',()=> 'idle')
-const mobileMenuOpen = ref(false)
+const props = defineProps<{ menuOpen: boolean; menuControls: string }>()
+const emit = defineEmits<{ 'toggle-menu': [] }>()
 const userMenuOpen = ref(false)
 
 const titles: { test: (path: string) => boolean; title: string; eyebrow: string }[] = [
@@ -32,7 +33,6 @@ async function toggleTheme() {
 
 watch(() => route.path, () => {
   userMenuOpen.value = false
-  mobileMenuOpen.value = false
 })
 </script>
 
@@ -40,8 +40,8 @@ watch(() => route.path, () => {
   <header class="header">
     <div class="header-inner">
       <div class="header-context">
-        <button class="mobile-toggle" aria-label="Abrir menu" @click="mobileMenuOpen = true">
-          <UiIcon name="menu" :size="21" />
+        <button id="central-menu-toggle" type="button" class="sidebar-toggle" :aria-label="props.menuOpen ? 'Fechar menu lateral' : 'Abrir menu lateral'" :title="props.menuOpen ? 'Fechar menu lateral' : 'Abrir menu lateral'" :aria-expanded="props.menuOpen" :aria-controls="props.menuOpen ? props.menuControls : undefined" @click="emit('toggle-menu')">
+          <UiIcon :name="props.menuOpen ? 'panelLeftClose' : 'panelLeftOpen'" :size="21" />
         </button>
         <div>
           <span class="eyebrow">{{ pageInfo.eyebrow }}</span>
@@ -93,7 +93,6 @@ watch(() => route.path, () => {
         </div>
       </div>
     </div>
-    <LayoutMobileMenu v-model="mobileMenuOpen" />
   </header>
 </template>
 
@@ -137,8 +136,9 @@ watch(() => route.path, () => {
   color: var(--color-text-soft);
   font-size: 0.89rem;
 }
-.mobile-toggle {
-  display: none;
+.sidebar-toggle {
+  display: grid;
+  flex-shrink: 0;
   width: 42px;
   height: 42px;
   place-items: center;
@@ -148,6 +148,8 @@ watch(() => route.path, () => {
   border-radius: var(--radius-md);
   cursor: pointer;
 }
+.sidebar-toggle:hover { background: var(--color-surface-soft); color: var(--color-primary); }
+.sidebar-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .header-actions {
   display: flex;
   align-items: center;
@@ -334,7 +336,6 @@ watch(() => route.path, () => {
 }
 @media (max-width: 900px) {
   .header-inner { padding: 0 18px; }
-  .mobile-toggle { display: grid; }
 }
 @media (max-width: 700px) {
   .theme-copy { display: none; }
@@ -344,6 +345,10 @@ watch(() => route.path, () => {
   .user-copy,
   .user-trigger > svg { display: none; }
   .header-context strong { font-size: 0.8rem; }
+  .header-inner { gap: 8px; padding-inline: 12px; }
+  .header-context { gap: 8px; }
+  .header-context > div { min-width: 0; }
+  .header-context strong { overflow-wrap: anywhere; }
   .header-actions { gap: 6px; }
 }
 </style>
